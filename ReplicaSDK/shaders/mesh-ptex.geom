@@ -12,7 +12,7 @@ void main()
     gl_PrimitiveID = gl_PrimitiveIDIn;
 
     uv = vec2(1.0, 0.0);
-    gl_ClipDistance[0] = gl_in[1].gl_ClipDistance[0];    
+    gl_ClipDistance[0] = gl_in[1].gl_ClipDistance[0];
     gl_Position = gl_in[1].gl_Position;
     EmitVertex();
 

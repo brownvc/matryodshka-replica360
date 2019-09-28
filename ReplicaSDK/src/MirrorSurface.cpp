@@ -24,6 +24,7 @@ inline Eigen::MatrixXd EigenMatrixFromJson(const picojson::value& json) {
 }
 
 MirrorSurface::MirrorSurface(const picojson::value& json) {
+  
   centroid_w = EigenMatrixFromJson(json["centroid_w"]).cast<float>();
   plane_w = EigenMatrixFromJson(json["plane_w"]).cast<float>();
 
