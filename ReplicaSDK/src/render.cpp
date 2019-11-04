@@ -202,17 +202,19 @@ int main(int argc, char* argv[]) {
 
       for(int k =0; k<7;k++){
 
-        int eye = 2；
-        float basel = cameraPos[j][3];
-        Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+        int eye=2;
+        float basel;
         if(k==0){
           // src/ref baseline
+          basel = cameraPos[j][3];
+          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
           T_translate.topRightCorner(3, 1) = Eigen::Vector3d(basel, 0, 0);
           T_camera_world = T_translate.inverse() * spot_cam_to_world ;
           s_cam.GetModelViewMatrix() = T_camera_world;
-        }
-        else if(k==1){
+        }else if(k==1){
           // src/ref baseline
+          basel = cameraPos[j][3];
+          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
           T_translate.topRightCorner(3, 1) = Eigen::Vector3d(-basel, 0, 0);
           T_camera_world = T_translate.inverse() * spot_cam_to_world ;
           s_cam.GetModelViewMatrix() = T_camera_world;
@@ -220,6 +222,7 @@ int main(int argc, char* argv[]) {
         else if(k==2){
           // interpolate frame to the right
           basel = cameraPos[j][4];
+          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
           T_translate.topRightCorner(3, 1) = Eigen::Vector3d(basel, 0, 0);
           T_camera_world = T_translate.inverse() * spot_cam_to_world ;
           s_cam.GetModelViewMatrix() = T_camera_world;
@@ -227,6 +230,7 @@ int main(int argc, char* argv[]) {
         else if(k==3){
           // interpolate frame to the left
           basel = cameraPos[j][4];
+          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
           T_translate.topRightCorner(3, 1) = Eigen::Vector3d(-basel, 0, 0);
           T_camera_world = T_translate.inverse() * spot_cam_to_world ;
           s_cam.GetModelViewMatrix() = T_camera_world;
@@ -234,6 +238,7 @@ int main(int argc, char* argv[]) {
         else if(k==4){
           // extrapolate frame to the right
           basel = cameraPos[j][5];
+          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
           T_translate.topRightCorner(3, 1) = Eigen::Vector3d(basel, 0, 0);
           T_camera_world = T_translate.inverse() * spot_cam_to_world ;
           s_cam.GetModelViewMatrix() = T_camera_world;
@@ -241,6 +246,7 @@ int main(int argc, char* argv[]) {
         else if(k==5){
           // extrapolate frame to the left
           basel = cameraPos[j][6];
+          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
           T_translate.topRightCorner(3, 1) = Eigen::Vector3d(-basel, 0, 0);
           T_camera_world = T_translate.inverse() * spot_cam_to_world ;
           s_cam.GetModelViewMatrix() = T_camera_world;
@@ -251,7 +257,7 @@ int main(int argc, char* argv[]) {
 
         auto frame_start = high_resolution_clock::now();
 
-        std::cout << "\rRendering position " << k + 1 << "/" << 8 << "... with baseline" << basel << "and with eye " << eye << std::endl;
+        std::cout << "\rRendering position " << k + 1 << "/" << 8 <<" with baseline of " << basel << std::endl;
 
         // Render
         frameBuffer.Bind();
@@ -322,7 +328,7 @@ int main(int argc, char* argv[]) {
             depthTexture.Download(depthImage.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
             char filename[1000];
-            snprintf(filename, 1000, "/home/selenaling/Desktop/Replica-Dataset/build/ReplicaSDK/equirectData/test-data-tgt-depth/%s_%04zu_pos%01zu.jpeg",navPositions.substr(0,navPositions.length()-4).c_str(),j,k+1);
+            snprintf(filename, 1000, "/home/selenaling/Desktop/Replica-Dataset/build/ReplicaSDK/equirectData/train-data-360-tgt-depth/%s_%04zu_pos%01zu.jpeg",navPositions.substr(0,navPositions.length()-4).c_str(),j,k+1);
             pangolin::SaveImage(
                 depthImage.UnsafeReinterpret<uint8_t>(),
                 pangolin::PixelFormatFromString("RGB24"),
@@ -348,6 +354,9 @@ int main(int argc, char* argv[]) {
   auto model_duration = duration_cast<microseconds>(model_stop - model_start);
 
   std::cout << "Time taken rendering the model: " << model_duration.count() << " microseconds" << std::endl;
+
+
+  }
 
   return 0;
 }
