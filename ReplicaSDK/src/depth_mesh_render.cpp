@@ -1,4 +1,5 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+#include <EGL.h>
 #include <DepthMeshLib.h>
 #include <ctime>
 #include <pangolin/display/display.h>
@@ -12,9 +13,10 @@
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==4, "Usage: ./ReplicaViewer PREFIX LAYERED SPHERICAL");
+  ASSERT(argc==5, "Usage: ./ReplicaViewer PREFIX OUT_FILE LAYERED SPHERICAL");
 
   const std::string prefix(argv[1]);
+  const std::string out_file(argv[2]);
 
   const std::string colorFile = prefix + ".png";
   const std::string depthFile = prefix + "D.png";
@@ -25,22 +27,25 @@ int main(int argc, char* argv[]) {
   const std::string inpColorFile = prefix + "_BG_inp.png";
   const std::string inpDepthFile = prefix + "_BGD_inp.png";
 
-  const std::string layeredArg = std::string(argv[2]);
-  const std::string sphericalArg = std::string(argv[3]);
+  const std::string layeredArg = std::string(argv[3]);
+  const std::string sphericalArg = std::string(argv[4]);
 
   bool layered = layeredArg.compare(std::string("y")) == 0;
   bool spherical = sphericalArg.compare(std::string("y")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
-  const int uiWidth = 0;
-  const int width = 1280;
-  const int height = 960;
+  int width = 640;
+  int height = 320;
 
-  pangolin::CreateWindowAndBind("ReplicaViewer", uiWidth + width, height);
-
-  if (glewInit() != GLEW_OK) {
-    pango_print_error("Unable to initialize GLEW.");
+  if(spherical){
+    width = 640;
+    height = 320;
   }
+
+  // Setup EGL
+  EGLCtx egl;
+
+  egl.PrintInformation();
 
   // Setup default OpenGL parameters
   glEnable(GL_DEPTH_TEST);
@@ -49,14 +54,6 @@ int main(int argc, char* argv[]) {
   const GLenum frontFace = GL_CW;
   glFrontFace(frontFace);
   glLineWidth(1.0f);
-
-  // Tell the base view to arrange its children equally
-  if (uiWidth != 0) {
-    pangolin::CreatePanel("ui").SetBounds(0, 1.0f, 0, pangolin::Attach::Pix(uiWidth));
-  }
-
-  pangolin::View& container =
-      pangolin::CreateDisplay().SetBounds(0, 1.0f, pangolin::Attach::Pix(uiWidth), 1.0f);
 
   pangolin::OpenGlRenderState s_cam(
       pangolin::ProjectionMatrixRDF_TopLeft(
@@ -68,40 +65,34 @@ int main(int argc, char* argv[]) {
           (height - 1.0f) / 2.0f,
           0.1f,
           100.0f),
-      pangolin::ModelViewLookAtRDF(0, 0, 0, 0, 0, 1, 0, 1, 0));
+      pangolin::ModelViewLookAtRDF(0, 0, 0.3, 0, 0, 1, 0, 1, 0));
 
-  pangolin::Handler3D s_handler(s_cam);
-
-  pangolin::View& meshView = pangolin::Display("MeshView")
-                                 .SetBounds(0, 1.0f, 0, 1.0f, (double)width / (double)height)
-                                 .SetHandler(&s_handler);
-
-  container.AddDisplay(meshView);
   const std::string shadir = STR(SHADER_DIR);
+
+  pangolin::GlTexture color_buffer3(width, height);
+  pangolin::GlRenderBuffer depth_buffer3(width, height);
+  pangolin::GlFramebuffer fbo3(color_buffer3, depth_buffer3);
   std::shared_ptr<Shape> quad = DepthMesh::GenerateMeshData(width, height, spherical);
 
   if(!layered) {
     DepthMesh depthMesh(
         quad,
         colorFile, depthFile, alphaFile, layered, spherical, true);
-
     depthMesh.SetExposure(1.f);
 
-    while (!pangolin::ShouldQuit()) {
-      if (meshView.IsShown()) {
-        meshView.Activate(s_cam);
+    // Render
+    fbo3.Bind();
 
-        // Render
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        glEnable(GL_CULL_FACE);
+    glPushAttrib(GL_VIEWPORT_BIT);
+    glViewport(0, 0, width, height);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glEnable(GL_CULL_FACE);
 
-        depthMesh.Render(s_cam);
+    depthMesh.Render(s_cam);
 
-        glDisable(GL_CULL_FACE);
-      }
+    glDisable(GL_CULL_FACE);
 
-      pangolin::FinishFrame();
-    }
+    fbo3.Unbind();
   }
   else {
     // FBOs
@@ -128,50 +119,77 @@ int main(int argc, char* argv[]) {
     depthMeshBg.SetExposure(1.f);
     depthMeshFg.SetExposure(1.f);
 
-    while (!pangolin::ShouldQuit()) {
-      if (meshView.IsShown()) {
-        meshView.Activate(s_cam);
+    // First pass
+    fbo1.Bind();
 
-        // First pass
-        fbo1.Bind();
+    glPushAttrib(GL_VIEWPORT_BIT);
+    glViewport(0, 0, width, height);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glEnable(GL_CULL_FACE);
 
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        glEnable(GL_CULL_FACE);
+    depthMeshInp.Render(s_cam);
 
-        depthMeshInp.Render(s_cam);
+    glDisable(GL_CULL_FACE);
 
-        glDisable(GL_CULL_FACE);
+    fbo1.Unbind();
 
-        fbo1.Unbind();
+    // Second pass
+    fbo2.Bind();
 
-        // Second pass
-        fbo2.Bind();
+    glPushAttrib(GL_VIEWPORT_BIT);
+    glViewport(0, 0, width, height);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glEnable(GL_CULL_FACE);
 
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        glEnable(GL_CULL_FACE);
+    glActiveTexture(GL_TEXTURE3);
+    color_buffer1.Bind();
+    depthMeshBg.Render(s_cam);
 
-        glActiveTexture(GL_TEXTURE3);
-        color_buffer1.Bind();
-        depthMeshBg.Render(s_cam);
+    glDisable(GL_CULL_FACE);
 
-        glDisable(GL_CULL_FACE);
+    fbo2.Unbind();
 
-        fbo2.Unbind();
+    // Third pass
+    fbo3.Bind();
 
-        // Third pass
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        glEnable(GL_CULL_FACE);
+    glPushAttrib(GL_VIEWPORT_BIT);
+    glViewport(0, 0, width, height);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glEnable(GL_CULL_FACE);
 
-        glActiveTexture(GL_TEXTURE3);
-        color_buffer2.Bind();
-        depthMeshFg.Render(s_cam);
+    glActiveTexture(GL_TEXTURE3);
+    color_buffer2.Bind();
+    depthMeshFg.Render(s_cam);
 
-        glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
+
+    fbo3.Unbind();
+  }
+
+  pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
+  pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> out_image(width, height);
+  color_buffer3.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+
+  if(spherical) {
+    for(int i = 0; i < height; i++) {
+      for(int j = 0; j < width; j++) {
+        out_image[i * width + j] = image[i * width + (width - j - 1)];
       }
-
-      pangolin::FinishFrame();
+    }
+  }
+  else {
+    for(int i = 0; i < height; i++) {
+      for(int j = 0; j < width; j++) {
+        out_image[i * width + j] = image[(height - i - 1) * width + j];
+      }
     }
   }
 
+  pangolin::SaveImage(
+      out_image.UnsafeReinterpret<uint8_t>(),
+      pangolin::PixelFormatFromString("RGB24"),
+      std::string(out_file));
+
   return 0;
 }
+

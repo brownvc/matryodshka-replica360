@@ -57,9 +57,20 @@ target_link_libraries(ReplicaRenderer
                       stdc++fs
 )
 
-add_executable(DepthMeshViewer src/depth_mesh_viewer.cpp src/MirrorSurface.cpp)
+add_executable(DepthMeshViewer src/depth_mesh_viewer.cpp)
 
 target_link_libraries(DepthMeshViewer
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(DepthMeshRenderer src/depth_mesh_render.cpp)
+
+target_link_libraries(DepthMeshRenderer
                       ${Pangolin_LIBRARIES}
                       ${dl_LIBRARIES}
                       GL

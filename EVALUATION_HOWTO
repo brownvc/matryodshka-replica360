@@ -1,0 +1,31 @@
+Serrano et. al
+==============
+
+1) Create low-res frames from videos
+    - Use the split script
+2) Convert existing high-res pre-processed frames to low-res if need be
+    - Use the downsample script
+3) Set the desired output camera location and orientation
+4) Change the output size of DepthMeshRenderer to match desired output resolution,
+and rebuild
+5) Call the script
+    ./build/ReplicaSDK/DepthMeshRenderer ./assets/cafeteria_down/cafeteria_down <output_file_name> y y
+OR
+    ./build/ReplicaSDK/DepthMeshRenderer ./assets/cafeteria_down/cafeteria_down <output_file_name> y n
+For perspective rendering
+6) Generate equivalent output from ODS video frames using our method
+    a) Generate low-res frames
+    b) Set camera pose
+    c) Get output
+
+Naive mesh-based re-rendering
+=============================
+1) Include DepthMeshLib.h in data generation script
+2) Generate a quad with which to perform depth mesh rendering (see the depth_mesh_viewer.cpp or depth_mesh_render.cpp files)
+3) Create a depth mesh object for each new example
+    - Do this after the normal image files for this example have been written
+    - Use the second constructor, giving as input the textures corresponding to ERP color, ERP depth for the base position
+    - Render the mesh from the offset position
+    - Write the color to an output file -- should look similar to the offset position ground truth frame
+4) When evaluating our method
+    - Additionally compare these new frames from naive mesh-based re-rendering to the ground truth

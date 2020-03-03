@@ -16,9 +16,10 @@
 #include <unordered_map>
 #include <iostream>
 
-DepthMesh::DepthMesh(const std::string& meshColor, const std::string& meshDepth,
-      const std::string& meshAlpha,
-      bool rL, bool rS, bool fp) {
+DepthMesh::DepthMesh(const std::shared_ptr<Shape> &in_mesh,
+    const std::string& meshColor, const std::string& meshDepth,
+    const std::string& meshAlpha,
+    bool rL, bool rS, bool fp) {
   std::cout << meshColor << std::endl;
   std::cout << meshDepth << std::endl;
 
@@ -36,13 +37,53 @@ DepthMesh::DepthMesh(const std::string& meshColor, const std::string& meshDepth,
   firstPass = fp;
 
   // Load mesh data
-  LoadMeshData();
+  mesh = in_mesh;
   LoadMeshColor(meshColor);
   LoadMeshDepth(meshDepth);
 
   if(renderLayered && !firstPass) {
     LoadMeshAlpha(meshAlpha);
   }
+
+  if (isHdr) {
+    // set defaults for HDR scene
+    exposure = 0.025f;
+    gamma = 1.6969f;
+    saturation = 1.5f;
+  }
+
+  // Load shader
+  const std::string shadir = STR(SHADER_DIR);
+  ASSERT(pangolin::FileExists(shadir), "Shader directory not found!");
+
+  if(renderSpherical){
+    shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/depth-mesh-spherical.vert", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/depth-mesh-spherical.geom", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/depth-mesh.frag", {}, {shadir});
+    shader.Link();
+
+  }
+  else{
+    shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/depth-mesh.vert", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/depth-mesh.frag", {}, {shadir});
+    shader.Link();
+
+  }
+}
+
+DepthMesh::DepthMesh(const std::shared_ptr<Shape> &in_mesh,
+      pangolin::GlTexture &mct,
+      pangolin::GlTexture &mdt,
+      bool rS) {
+  // Set rendering mdoe
+  renderLayered = false;
+  firstPass = true;
+  renderSpherical = rS;
+
+  // Load mesh data
+  mesh = in_mesh;
+  meshColorTex = std::move(mct);
+  meshDepthTex = std::move(mdt);
 
   if (isHdr) {
     // set defaults for HDR scene
@@ -148,11 +189,8 @@ void DepthMesh::Render(
   shader.Unbind();
 }
 
-void DepthMesh::LoadMeshData() {
-  mesh = std::make_shared<Shape>(VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLE_STRIP);
-
-  int width = 2048;
-  int height = 1024;
+std::shared_ptr<Shape> DepthMesh::GenerateMeshData(int width, int height, bool renderSpherical) {
+  std::shared_ptr<Shape> mesh = std::make_shared<Shape>(VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLE_STRIP);
 
   for(int row = 0; row < height; row++) {
     for(int col = 0; col < width; col++) {
@@ -198,10 +236,7 @@ void DepthMesh::LoadMeshData() {
     }
   }
 
-  //std::vector<float> sphereData;
-  //sphereData.resize(sphereVertexCount * 8);
-  //std::copy(&sphereVertexBufferData[0], &sphereVertexBufferData[sphereVertexCount * 8 - 1], sphereData.begin());
-  //mesh = std::make_shared<Shape>(sphereData, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLES);
+  return mesh;
 }
 
 void DepthMesh::LoadMeshColor(const std::string& meshColor) {

@@ -15,9 +15,15 @@
 
 class DepthMesh {
  public:
-  DepthMesh(const std::string& meshColor, const std::string& meshDepth,
+  DepthMesh(const std::shared_ptr<Shape> &mesh,
+      const std::string& meshColor, const std::string& meshDepth,
       const std::string& meshAlpha,
       bool renderLayered, bool renderSpherical, bool firstPass=true);
+
+  DepthMesh(const std::shared_ptr<Shape> &mesh,
+      pangolin::GlTexture &meshColorTex,
+      pangolin::GlTexture &meshDepthTex,
+      bool renderSpherical);
 
   virtual ~DepthMesh();
 
@@ -35,16 +41,9 @@ class DepthMesh {
   void SetSaturation(const float& val);
 
   void SetBaseline(const float& val);
+  static std::shared_ptr<Shape> GenerateMeshData(int width, int height, bool renderSpherical);
 
  private:
-  struct Mesh {
-    pangolin::GlTexture atlas;
-    pangolin::GlBuffer vbo;
-    pangolin::GlBuffer ibo;
-    pangolin::GlBuffer abo;
-  };
-
-  void LoadMeshData();
   void LoadMeshColor(const std::string& meshColor);
   void LoadMeshDepth(const std::string& meshDepth);
   void LoadMeshAlpha(const std::string& meshAlpha);
@@ -61,6 +60,7 @@ class DepthMesh {
   float baseline = 0.064f;
   bool isHdr = false;
 
+ public:
   std::shared_ptr<Shape> mesh;
   pangolin::GlTexture meshColorTex, meshDepthTex, meshAlphaTex;
 };
