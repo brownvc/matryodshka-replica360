@@ -1,6 +1,6 @@
 Naive mesh-based re-rendering (replica dataset)
 ===============================================
-1) Create a file containing the evaluation dataset dataset file names
+1) Create a file containing the evaluation dataset file names
     - Each line is laid out as follows
 
 <erp_color>.png <erp_depth>.png
@@ -18,7 +18,7 @@ ODS-NET mesh-based re-rendering (replica dataset)
 1) Predict depth for each ODS pair in replica dataset
     - Adapt the predict.py script in the ods-net repository
 
-2) Create a file containing the evaluation dataset dataset file names
+2) Create a file containing the evaluation dataset file names
     - Each line is laid out as follows
 
 <ods_left_color>.png <ods_left_depth>.png
@@ -37,7 +37,7 @@ Naive mesh-based re-rendering (videos)
     - Use the `split_ods.py` script, or the `split_all_in_folder` script
     - Specify the output resolution
 
-2) Create a file containing the evaluation dataset dataset file names
+2) Create a file containing the evaluation dataset file names
     - Each line is laid out as follows
 
 <ods_left_color>.png <ods_left_depth>.png
@@ -56,7 +56,7 @@ ODS-NET mesh-based re-rendering (videos)
     - predict.py script supports running on videos directly
     - collect outputs
 
-2) Create a file containing the evaluation dataset dataset file names
+2) Create a file containing the evaluation dataset file names
     - Each line is laid out as follows
 
 <ods_left_color>.png <ods_left_depth>.png
@@ -76,7 +76,7 @@ Serrano et. al (videos with RGBD ERP)
     - Use the `split.py` script, or the `split_all_in_folder_layered` script
     - Specify the output resolution
 
-2) Create a file containing the evaluation dataset dataset file names
+2) Create a file containing the evaluation dataset file names
     - Each line is laid out as follows
 
 <fg_color>.png <bg_color>.png <inp_color>.png <fg_depth>.png <bg_depth>.png <inp_depth>.png <fg_alpha>.png <bg_alpha>.png <inp_alpha>.png
