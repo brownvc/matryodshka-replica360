@@ -38,7 +38,7 @@ void main()
         depth = 0.299999999999999999f / (depth + 0.001f);
     }
     else if(render_ods == 1) {
-        depth = textureLod(depthTex, uv, 0.0).x * 16;
+        depth = textureLod(depthTex, uv, 0.0).x * 32;
     }
     else {
         depth = textureLod(depthTex, uv, 0.0).x * 16;
