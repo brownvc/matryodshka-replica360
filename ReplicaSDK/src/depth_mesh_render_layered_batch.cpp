@@ -175,37 +175,13 @@ int main(int argc, char* argv[]) {
     pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
     color_buffer3.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
+    char filename[1000];
+    snprintf(filename, 1000, "%s/out_%04d.png", out_dir.c_str(), i);
+
     pangolin::SaveImage(
         image.UnsafeReinterpret<uint8_t>(),
         pangolin::PixelFormatFromString("RGB24"),
-        out_dir + "/im" + std::to_string(i) + ".png");
-
-
-    /*
-    pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
-    pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> out_image(width, height);
-    color_buffer3.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
-
-    if(spherical) {
-      for(int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
-          out_image[i * width + j] = image[i * width + (width - j - 1)];
-        }
-      }
-    }
-    else {
-      for(int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
-          out_image[i * width + j] = image[(height - i - 1) * width + j];
-        }
-      }
-    }
-
-    pangolin::SaveImage(
-        out_image.UnsafeReinterpret<uint8_t>(),
-        pangolin::PixelFormatFromString("RGB24"),
-        out_dir + "/im" + std::to_string(i) + ".png");
-    */
+        filename);
   }
 
   return 0;
