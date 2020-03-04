@@ -92,6 +92,7 @@ void main()
 
     pos.x = (-theta / (M_PI) + 0.0) * 1;
     pos.y = (-phi / (M_PI / 2) - 0.0002) * 1;
+
     pos.z = abs(length(p.xyz)) / 20;
     pos.w = 1;
 

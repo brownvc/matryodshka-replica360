@@ -2,52 +2,93 @@
 #version 430 core
 #define M_PI 3.1415926535897932384626433832795
 
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 normal;
-layout(location = 2) in vec2 in_uv;
-layout(binding = 1) uniform sampler2D depthTex;
+layout(location = 0) in vec4 position;
 
 uniform mat4 MVP;
 uniform mat4 MV;
 uniform float baseline;
 uniform vec4 clipPlane;
+uniform int leftRight;
 
-uniform int render_layered;
-
-out VS_OUT {
-    vec2 uv;
-    vec2 uv_screen;
-} vs_out;
+out float depth;
 
 void main()
 {
-    // Get position on the sphere from uv coordinates
-    vec2 uv = vec2(1 - in_uv.x, in_uv.y);
-
-    vec3 p = vec3(sin(M_PI * uv.y) * cos(2 * M_PI * uv.x),
-        cos(M_PI * uv.y),
-        sin(M_PI * uv.y) * sin(2 * M_PI * uv.x));
-
-    // Offset by depth
-    vec4 texel;
-    float depth;
-
-    if(render_layered == 1) {
-        depth = textureLod(depthTex, uv, 0.0).x;
-        depth = 0.299999999999999999f / (depth + 0.001f);
-    }
-    else {
-        depth = textureLod(depthTex, uv, 0.0).x * 16;
-    }
-
-    p = p * depth;
+    gl_ClipDistance[0] = 1;
+    vec4 perspPos = MVP * position;
 
     // Map point to clip space based on equirectangular projection
-    p = (MV * vec4(p, 1)).xyz;
+    vec3 p = (MV * position).xyz;
+    depth = abs(length(p.xyz));
+
+    float r = min(baseline, max(0,sqrt(p.x*p.x + p.z*p.z)-0.002));
+    float f = r * r - p.x * p.x - p.z * p.z;
+
+    vec3 d;
+    float px, pz;
+
+    if(abs(p.z) > abs(p.x)) {
+        px = p.x;
+        pz = p.z;
+    }
+    else {
+        px = p.z;
+        pz = p.x;
+    }
+
+    float a = 1 + px * px / (pz * pz);
+    float b = -2 * f * px / (pz * pz);
+    float c = f + f * f / (pz * pz);
+
+    float disc = b * b - 4 * a * c;
+
+    if(leftRight!=2){
+      if(disc < 0){
+          d=p;
+          float theta = - atan(d.z, d.x);
+          float phi = - atan(d.y, sqrt(d.x * d.x + d.z * d.z));
+          vec4 pos;
+          pos.x = (-theta / (M_PI) + 0.0) * 1;
+          pos.y = (-phi / (M_PI / 2) + 0.0) * 1;
+          pos.z = abs(length(p.xyz)) / 20;
+          pos.w = 1;
+
+          gl_Position = pos;
+
+          //gl_Position = vec4(0, 0, 0, 0);
+          return;
+      }
+    }
+
+    // Direction vector from point
+    float s = sign(pz) * sqrt(disc);
+    if(abs(p.z) <= abs(p.x)) {
+        s = -s;
+    }
+
+    //Do 'left-eye' rendering
+    if(leftRight == 1){
+        s = -s;
+    }
+
+    float dx = (-b + s) / (2 * a);
+    float dz = (f - px * dx) / pz;
+
+    if(abs(p.z) > abs(p.x)) {
+        d = vec3(-dx, p.y, -dz);
+    }
+    else {
+        d = vec3(-dz, p.y, -dx);
+    }
+
+    //Do monoscopic rendering with baseline 0
+    if(leftRight == 2){
+        d=p;
+    }
 
     // Angles from direction vector
-    float theta = - atan(p.z, p.x);
-    float phi = - atan(p.y, sqrt(p.x * p.x + p.z * p.z));
+    float theta = - atan(d.z, d.x);
+    float phi = - atan(d.y, sqrt(d.x * d.x + d.z * d.z));
 
     // Normalize to clip space
     vec4 pos;
@@ -57,12 +98,5 @@ void main()
     pos.w = 1;
 
     gl_Position = pos;
-    gl_Position.z = gl_Position.z / 20;
-
-    // Clip distance
-    gl_ClipDistance[0] = 1;
-
-    // Frag uv
-    vs_out.uv = in_uv;
-    vs_out.uv_screen = (gl_Position.xy / gl_Position.w + 1) / 2;
+    //gl_Position = perspPos;
 }

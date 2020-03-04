@@ -15,6 +15,7 @@ out float depth;
 void main()
 {
     gl_ClipDistance[0] = 1;
+    vec4 perspPos = MVP * position;
 
     // Map point to clip space based on equirectangular projection
     vec3 p = (MV * position).xyz;
@@ -97,4 +98,5 @@ void main()
     pos.w = 1;
 
     gl_Position = pos;
+    //gl_Position = perspPos;
 }
