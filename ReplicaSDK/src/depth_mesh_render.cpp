@@ -13,38 +13,20 @@
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==5, "Usage: ./ReplicaViewer PREFIX OUT_FILE LAYERED SPHERICAL");
+  ASSERT(argc==5, "Usage: ./ReplicaViewer COLOR DEPTH OUT_FILE SPHERICAL");
 
-  const std::string prefix(argv[1]);
-  const std::string out_file(argv[2]);
-
-  const std::string colorFile = prefix + ".png";
-  const std::string depthFile = prefix + "D.png";
-  const std::string alphaFile = prefix + "A.png";
-  const std::string bgColorFile = prefix + "_BG.png";
-  const std::string bgDepthFile = prefix + "_BGD.png";
-  const std::string bgAlphaFile = prefix + "_BGA.png";
-  const std::string inpColorFile = prefix + "_BG_inp.png";
-  const std::string inpDepthFile = prefix + "_BGD_inp.png";
-
-  const std::string layeredArg = std::string(argv[3]);
+  const std::string colorFile = std::string(argv[1]);
+  const std::string depthFile = std::string(argv[2]);
+  const std::string out_file(argv[3]);
   const std::string sphericalArg = std::string(argv[4]);
-
-  bool layered = layeredArg.compare(std::string("y")) == 0;
   bool spherical = sphericalArg.compare(std::string("y")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
   int width = 640;
   int height = 320;
 
-  if(spherical){
-    width = 640;
-    height = 320;
-  }
-
   // Setup EGL
   EGLCtx egl;
-
   egl.PrintInformation();
 
   // Setup default OpenGL parameters
@@ -69,106 +51,35 @@ int main(int argc, char* argv[]) {
 
   const std::string shadir = STR(SHADER_DIR);
 
-  pangolin::GlTexture color_buffer3(width, height);
-  pangolin::GlRenderBuffer depth_buffer3(width, height);
-  pangolin::GlFramebuffer fbo3(color_buffer3, depth_buffer3);
+  // Render
+  pangolin::GlTexture color_buffer(width, height);
+  pangolin::GlRenderBuffer depth_buffer(width, height);
+  pangolin::GlFramebuffer fbo(color_buffer, depth_buffer);
+
   std::shared_ptr<Shape> quad = DepthMesh::GenerateMeshData(width, height, spherical);
+  DepthMesh depthMesh(
+      quad,
+      colorFile, depthFile, "", false, spherical, true);
+  depthMesh.SetExposure(1.f);
 
-  if(!layered) {
-    DepthMesh depthMesh(
-        quad,
-        colorFile, depthFile, alphaFile, layered, spherical, true);
-    depthMesh.SetExposure(1.f);
+  // Render
+  fbo.Bind();
 
-    // Render
-    fbo3.Bind();
+  glPushAttrib(GL_VIEWPORT_BIT);
+  glViewport(0, 0, width, height);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  glEnable(GL_CULL_FACE);
 
-    glPushAttrib(GL_VIEWPORT_BIT);
-    glViewport(0, 0, width, height);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    glEnable(GL_CULL_FACE);
+  depthMesh.Render(s_cam);
 
-    depthMesh.Render(s_cam);
+  glDisable(GL_CULL_FACE);
 
-    glDisable(GL_CULL_FACE);
+  fbo.Unbind();
 
-    fbo3.Unbind();
-  }
-  else {
-    // FBOs
-    pangolin::GlTexture color_buffer1(width, height);
-    pangolin::GlRenderBuffer depth_buffer1(width, height);
-    pangolin::GlFramebuffer fbo1(color_buffer1, depth_buffer1);
-
-    pangolin::GlTexture color_buffer2(width, height);
-    pangolin::GlRenderBuffer depth_buffer2(width, height);
-    pangolin::GlFramebuffer fbo2(color_buffer2, depth_buffer2);
-
-    // Rendering passes
-    DepthMesh depthMeshInp(
-        quad,
-        inpColorFile, inpDepthFile, "", layered, spherical, true);
-    DepthMesh depthMeshBg(
-        quad,
-        bgColorFile, bgDepthFile, bgAlphaFile, layered, spherical, false);
-    DepthMesh depthMeshFg(
-        quad,
-        colorFile, depthFile, alphaFile, layered, spherical, false);
-
-    depthMeshInp.SetExposure(1.f);
-    depthMeshBg.SetExposure(1.f);
-    depthMeshFg.SetExposure(1.f);
-
-    // First pass
-    fbo1.Bind();
-
-    glPushAttrib(GL_VIEWPORT_BIT);
-    glViewport(0, 0, width, height);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    glEnable(GL_CULL_FACE);
-
-    depthMeshInp.Render(s_cam);
-
-    glDisable(GL_CULL_FACE);
-
-    fbo1.Unbind();
-
-    // Second pass
-    fbo2.Bind();
-
-    glPushAttrib(GL_VIEWPORT_BIT);
-    glViewport(0, 0, width, height);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    glEnable(GL_CULL_FACE);
-
-    glActiveTexture(GL_TEXTURE3);
-    color_buffer1.Bind();
-    depthMeshBg.Render(s_cam);
-
-    glDisable(GL_CULL_FACE);
-
-    fbo2.Unbind();
-
-    // Third pass
-    fbo3.Bind();
-
-    glPushAttrib(GL_VIEWPORT_BIT);
-    glViewport(0, 0, width, height);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    glEnable(GL_CULL_FACE);
-
-    glActiveTexture(GL_TEXTURE3);
-    color_buffer2.Bind();
-    depthMeshFg.Render(s_cam);
-
-    glDisable(GL_CULL_FACE);
-
-    fbo3.Unbind();
-  }
-
+  // Write image
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> out_image(width, height);
-  color_buffer3.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+  color_buffer.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
   if(spherical) {
     for(int i = 0; i < height; i++) {

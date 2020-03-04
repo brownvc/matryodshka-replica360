@@ -6,11 +6,19 @@
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==4, "Usage: ./ReplicaViewer COLOR DEPTH SPHERICAL");
+  ASSERT(argc==3, "Usage: ./ReplicaViewer PREFIX SPHERICAL");
 
-  const std::string colorFile = std::string(argv[1]);
-  const std::string depthFile = std::string(argv[2]);
-  const std::string sphericalArg = std::string(argv[3]);
+  const std::string prefix(argv[1]);
+
+  const std::string colorFile = prefix + ".png";
+  const std::string depthFile = prefix + "D.png";
+  const std::string alphaFile = prefix + "A.png";
+  const std::string bgColorFile = prefix + "_BG.png";
+  const std::string bgDepthFile = prefix + "_BGD.png";
+  const std::string bgAlphaFile = prefix + "_BGA.png";
+  const std::string inpColorFile = prefix + "_BG_inp.png";
+  const std::string inpDepthFile = prefix + "_BGD_inp.png";
+  const std::string sphericalArg = std::string(argv[2]);
   bool spherical = sphericalArg.compare(std::string("y")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
@@ -62,26 +70,72 @@ int main(int argc, char* argv[]) {
   const std::string shadir = STR(SHADER_DIR);
   std::shared_ptr<Shape> quad = DepthMesh::GenerateMeshData(width, height, spherical);
 
-  DepthMesh depthMesh(
-      quad,
-      colorFile, depthFile, "", false, spherical, true);
+  // FBOs
+  pangolin::GlTexture color_buffer1(width, height);
+  pangolin::GlRenderBuffer depth_buffer1(width, height);
+  pangolin::GlFramebuffer fbo1(color_buffer1, depth_buffer1);
 
-  depthMesh.SetExposure(1.f);
+  pangolin::GlTexture color_buffer2(width, height);
+  pangolin::GlRenderBuffer depth_buffer2(width, height);
+  pangolin::GlFramebuffer fbo2(color_buffer2, depth_buffer2);
+
+  // Rendering passes
+  DepthMesh depthMeshInp(
+      quad,
+      inpColorFile, inpDepthFile, "", true, spherical, true);
+  DepthMesh depthMeshBg(
+      quad,
+      bgColorFile, bgDepthFile, bgAlphaFile, true, spherical, false);
+  DepthMesh depthMeshFg(
+      quad,
+      colorFile, depthFile, alphaFile, true, spherical, false);
+
+  depthMeshInp.SetExposure(1.f);
+  depthMeshBg.SetExposure(1.f);
+  depthMeshFg.SetExposure(1.f);
 
   while (!pangolin::ShouldQuit()) {
-    if (meshView.IsShown()) {
+      if (meshView.IsShown()) {
       meshView.Activate(s_cam);
 
-      // Render
+      // First pass
+      fbo1.Bind();
+
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glEnable(GL_CULL_FACE);
 
-      depthMesh.Render(s_cam);
+      depthMeshInp.Render(s_cam);
 
       glDisable(GL_CULL_FACE);
-    }
 
-    pangolin::FinishFrame();
+      fbo1.Unbind();
+
+      // Second pass
+      fbo2.Bind();
+
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      glEnable(GL_CULL_FACE);
+
+      glActiveTexture(GL_TEXTURE3);
+      color_buffer1.Bind();
+      depthMeshBg.Render(s_cam);
+
+      glDisable(GL_CULL_FACE);
+
+      fbo2.Unbind();
+
+      // Third pass
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      glEnable(GL_CULL_FACE);
+
+      glActiveTexture(GL_TEXTURE3);
+      color_buffer2.Bind();
+      depthMeshFg.Render(s_cam);
+
+      glDisable(GL_CULL_FACE);
+      }
+
+      pangolin::FinishFrame();
   }
 
   return 0;

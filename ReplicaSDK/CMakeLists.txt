@@ -68,9 +68,31 @@ target_link_libraries(DepthMeshViewer
                       stdc++fs
 )
 
+add_executable(DepthMeshViewerLayered src/depth_mesh_viewer_layered.cpp)
+
+target_link_libraries(DepthMeshViewerLayered
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
 add_executable(DepthMeshRenderer src/depth_mesh_render.cpp)
 
 target_link_libraries(DepthMeshRenderer
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(DepthMeshRendererLayered src/depth_mesh_render_layered.cpp)
+
+target_link_libraries(DepthMeshRendererLayered
                       ${Pangolin_LIBRARIES}
                       ${dl_LIBRARIES}
                       GL
