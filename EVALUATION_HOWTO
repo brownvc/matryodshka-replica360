@@ -1,3 +1,6 @@
+NOTE: ods-net evaluation will only work for = 0.064m
+NOTE: may need to Left-Right flip images after generation
+
 Naive mesh-based re-rendering (replica dataset)
 ===============================================
 0) Re-generate evaluation dataset if necessary so that it contains ERP + Depth for each example
@@ -17,8 +20,6 @@ Naive mesh-based re-rendering (replica dataset)
 
 ODS-NET mesh-based re-rendering (replica dataset)
 =================================================
-NOTE THAT THIS WILL ONLY WORK FOR BASELINE = 0.064m
-
 1) Predict depth for each ODS pair in replica dataset
     - Adapt the predict.py script in the ods-net repository (specifically the predict_from_video function)
 
