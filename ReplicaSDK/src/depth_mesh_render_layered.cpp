@@ -6,11 +6,6 @@
 #include <pangolin/display/widgets/widgets.h>
 
 
-// TODO:
-// 1) Higher resolution spheres
-// 2) Render all at once
-// 3) Writing, evaluation, check-in with Selena
-
 int main(int argc, char* argv[]) {
   // Command line args
   ASSERT(argc==4, "Usage: ./ReplicaViewer PREFIX OUT_FILE SPHERICAL");
@@ -75,13 +70,13 @@ int main(int argc, char* argv[]) {
   // Rendering passes
   DepthMesh depthMeshInp(
       quad,
-      inpColorFile, inpDepthFile, "", true, spherical, true);
+      inpColorFile, inpDepthFile, "", true, spherical, false, true);
   DepthMesh depthMeshBg(
       quad,
-      bgColorFile, bgDepthFile, bgAlphaFile, true, spherical, false);
+      bgColorFile, bgDepthFile, bgAlphaFile, true, spherical, false, false);
   DepthMesh depthMeshFg(
       quad,
-      colorFile, depthFile, alphaFile, true, spherical, false);
+      colorFile, depthFile, alphaFile, true, spherical, false, false);
 
   depthMeshInp.SetExposure(1.f);
   depthMeshBg.SetExposure(1.f);

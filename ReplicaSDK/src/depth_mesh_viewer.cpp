@@ -6,12 +6,13 @@
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==4, "Usage: ./ReplicaViewer COLOR DEPTH SPHERICAL");
+  ASSERT(argc==6, "Usage: ./ReplicaViewer COLOR DEPTH SPHERICAL ODS JUMP");
 
   const std::string colorFile = std::string(argv[1]);
   const std::string depthFile = std::string(argv[2]);
-  const std::string sphericalArg = std::string(argv[3]);
-  bool spherical = sphericalArg.compare(std::string("y")) == 0;
+  bool spherical = std::string(argv[3]).compare(std::string("y")) == 0;
+  bool ods = std::string(argv[4]).compare(std::string("y")) == 0;
+  bool jump = std::string(argv[5]).compare(std::string("y")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
   const int uiWidth = 0;
@@ -64,7 +65,7 @@ int main(int argc, char* argv[]) {
 
   DepthMesh depthMesh(
       quad,
-      colorFile, depthFile, "", false, spherical, true);
+      colorFile, depthFile, "", false, spherical, ods, true, jump);
 
   depthMesh.SetExposure(1.f);
 

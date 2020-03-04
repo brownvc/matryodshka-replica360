@@ -22,6 +22,7 @@ parser.add_argument('--height', type=int, help='Video width', default=320)
 parser.add_argument('--output_dir', type=str, help='Output directory', default='output')
 parser.add_argument('--output_prefix', type=str, help='Output prefix', default='frame')
 parser.add_argument('--video', type=str, help='Video file', default='input.mp4')
+parser.add_argument('--flip_lr', type=str2bool, help='Flip left and right images', default=False)
 args = parser.parse_args()
 
 # Create output directory
@@ -38,6 +39,15 @@ for iter_num in tqdm(range(min(length, 1000))):
     if iter_num % args.sample_rate == 0:
         ret, frame = cap.read()
 
+        # Write out frame
+        left = frame[frame.shape[0]//2:, :, :]
+        right = frame[:frame.shape[0]//2, :, :]
+
+        if args.flip_lr:
+            temp = left
+            left = right
+            right = temp
+
         # Resize images
         sigma = float(frame.shape[0]) / (2 * args.height)
         kwidth = int(sigma * 3)
@@ -45,13 +55,16 @@ for iter_num in tqdm(range(min(length, 1000))):
         if kwidth % 2 == 0:
             kwidth = kwidth + 1
 
-        # Blur
-        frame = cv2.GaussianBlur(frame, (kwidth, kwidth), sigma)
+        ''' Resize with cuda later '''
+        left = cv2.GaussianBlur(left, (kwidth, kwidth), sigma)
+        right = cv2.GaussianBlur(right, (kwidth, kwidth), sigma)
+        left = cv2.resize(left, (args.width, args.height))
+        right = cv2.resize(right, (args.width, args.height))
 
         # Write images
-        cv2.imwrite(args.output_dir + '/' + args.output_prefix + ('_%04d' % frame_num) + '.png', frame)
+        cv2.imwrite(args.output_dir + '/' + args.output_prefix + ('_%04d' % frame_num) + '_pos0.png', left)
+        cv2.imwrite(args.output_dir + '/' + args.output_prefix + ('_%04d' % frame_num) + '_pos1.png', right)
 
-        # Increase frame count
         frame_num += 1
 
 with open(args.output_dir+"/framenumber.txt","w") as file:

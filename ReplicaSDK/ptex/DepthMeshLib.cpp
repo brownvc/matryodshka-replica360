@@ -19,10 +19,7 @@
 DepthMesh::DepthMesh(const std::shared_ptr<Shape> &in_mesh,
     const std::string& meshColor, const std::string& meshDepth,
     const std::string& meshAlpha,
-    bool rL, bool rS, bool fp) {
-  std::cout << meshColor << std::endl;
-  std::cout << meshDepth << std::endl;
-
+    bool rL, bool rS, bool rO, bool fp, bool rJ) {
   // Check everything exists
   ASSERT(pangolin::FileExists(meshColor));
   ASSERT(pangolin::FileExists(meshDepth));
@@ -34,6 +31,8 @@ DepthMesh::DepthMesh(const std::shared_ptr<Shape> &in_mesh,
   // Set rendering mdoe
   renderLayered = rL;
   renderSpherical = rS;
+  renderODS = rO;
+  renderJump = rJ || rL;
   firstPass = fp;
 
   // Load mesh data
@@ -43,13 +42,6 @@ DepthMesh::DepthMesh(const std::shared_ptr<Shape> &in_mesh,
 
   if(renderLayered && !firstPass) {
     LoadMeshAlpha(meshAlpha);
-  }
-
-  if (isHdr) {
-    // set defaults for HDR scene
-    exposure = 0.025f;
-    gamma = 1.6969f;
-    saturation = 1.5f;
   }
 
   // Load shader
@@ -77,20 +69,15 @@ DepthMesh::DepthMesh(const std::shared_ptr<Shape> &in_mesh,
       bool rS) {
   // Set rendering mdoe
   renderLayered = false;
-  firstPass = true;
   renderSpherical = rS;
+  renderODS = false;
+  firstPass = true;
+  renderJump = false;
 
   // Load mesh data
   mesh = in_mesh;
   meshColorTex = std::move(mct);
   meshDepthTex = std::move(mdt);
-
-  if (isHdr) {
-    // set defaults for HDR scene
-    exposure = 0.025f;
-    gamma = 1.6969f;
-    saturation = 1.5f;
-  }
 
   // Load shader
   const std::string shadir = STR(SHADER_DIR);
@@ -157,6 +144,20 @@ void DepthMesh::Render(
   if(renderSpherical) {
     shader.SetUniform("MV", cam.GetModelViewMatrix());
     shader.SetUniform("baseline", baseline);
+  }
+
+  if(renderODS) {
+    shader.SetUniform("render_ods", 1);
+  }
+  else {
+    shader.SetUniform("render_ods", 0);
+  }
+
+  if(renderJump) {
+    shader.SetUniform("render_jump", 1);
+  }
+  else {
+    shader.SetUniform("render_jump", 0);
   }
 
   if(renderLayered) {

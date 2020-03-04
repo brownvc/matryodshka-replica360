@@ -1,0 +1,7 @@
+#!/bin/bash
+
+source /home/battal/anaconda3/bin/activate replica
+
+python split.py --width $3 --height $4 --output_dir $2/output_color --video $1.mp4
+python split.py --width $3 --height $4 --output_dir $2/output_depth --video $1_depth.mp4
+python split.py --width $3 --height $4 --output_dir $2/output_alpha --video $1_alphaproc.mp4

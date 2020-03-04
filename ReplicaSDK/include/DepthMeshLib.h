@@ -18,7 +18,8 @@ class DepthMesh {
   DepthMesh(const std::shared_ptr<Shape> &mesh,
       const std::string& meshColor, const std::string& meshDepth,
       const std::string& meshAlpha,
-      bool renderLayered, bool renderSpherical, bool firstPass=true);
+      bool renderLayered, bool renderSpherical, bool renderOds=false,
+      bool firstPass=true, bool renderJump=false);
 
   DepthMesh(const std::shared_ptr<Shape> &mesh,
       pangolin::GlTexture &meshColorTex,
@@ -50,6 +51,8 @@ class DepthMesh {
 
   bool renderLayered = false;
   bool renderSpherical = false;
+  bool renderODS = false;
+  bool renderJump = false;
   bool firstPass = false;
 
   pangolin::GlSlProgram shader;

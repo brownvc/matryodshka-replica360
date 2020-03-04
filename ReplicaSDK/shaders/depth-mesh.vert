@@ -9,7 +9,8 @@ layout(binding = 1) uniform sampler2D depthTex;
 uniform mat4 MVP;
 uniform vec4 clipPlane;
 
-uniform int render_layered = 1;
+uniform int render_jump;
+uniform int render_ods;
 
 out vec2 uv_frag;
 out vec2 uv_screen;
@@ -27,9 +28,12 @@ void main()
     vec4 texel;
     float depth;
 
-    if(render_layered == 1) {
+    if(render_jump == 1) {
         depth = textureLod(depthTex, uv, 0.0).x;
         depth = 0.299999999999999999f / (depth + 0.001f);
+    }
+    else if(render_ods == 1) {
+        depth = textureLod(depthTex, uv, 0.0).x * 32;
     }
     else {
         depth = textureLod(depthTex, uv, 0.0).x * 16;

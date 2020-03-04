@@ -82,13 +82,13 @@ int main(int argc, char* argv[]) {
   // Rendering passes
   DepthMesh depthMeshInp(
       quad,
-      inpColorFile, inpDepthFile, "", true, spherical, true);
+      inpColorFile, inpDepthFile, "", true, spherical, false, true);
   DepthMesh depthMeshBg(
       quad,
-      bgColorFile, bgDepthFile, bgAlphaFile, true, spherical, false);
+      bgColorFile, bgDepthFile, bgAlphaFile, true, spherical, false, false);
   DepthMesh depthMeshFg(
       quad,
-      colorFile, depthFile, alphaFile, true, spherical, false);
+      colorFile, depthFile, alphaFile, true, spherical, false, false);
 
   depthMeshInp.SetExposure(1.f);
   depthMeshBg.SetExposure(1.f);

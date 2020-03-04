@@ -1,31 +1,90 @@
-Serrano et. al
-==============
+Naive mesh-based re-rendering (replica dataset)
+===============================================
+1) Create a file containing the evaluation dataset dataset file names
+    - Each line is laid out as follows
 
-1) Create low-res frames from videos
-    - Use the split script
-2) Convert existing high-res pre-processed frames to low-res if need be
-    - Use the downsample script
-3) Set the desired output camera location and orientation
-4) Change the output size of DepthMeshRenderer to match desired output resolution,
-and rebuild
-5) Call the script
-    ./build/ReplicaSDK/DepthMeshRenderer ./assets/cafeteria_down/cafeteria_down <output_file_name> y y
-OR
-    ./build/ReplicaSDK/DepthMeshRenderer ./assets/cafeteria_down/cafeteria_down <output_file_name> y n
-For perspective rendering
-6) Generate equivalent output from ODS video frames using our method
-    a) Generate low-res frames
-    b) Set camera pose
-    c) Get output
+<erp_color>.png <erp_depth>.png
 
-Naive mesh-based re-rendering
-=============================
-1) Include DepthMeshLib.h in data generation script
-2) Generate a quad with which to perform depth mesh rendering (see the depth_mesh_viewer.cpp or depth_mesh_render.cpp files)
-3) Create a depth mesh object for each new example
-    - Do this after the normal image files for this example have been written
-    - Use the second constructor, giving as input the textures corresponding to ERP color, ERP depth for the base position
-    - Render the mesh from the offset position
-    - Write the color to an output file -- should look similar to the offset position ground truth frame
-4) When evaluating our method
-    - Additionally compare these new frames from naive mesh-based re-rendering to the ground truth
+2) Create a file containing the desired camera offsets for rendering
+    - Each line is laid out as follows
+
+<translate_x> <translate_y> <translate_z>
+
+3) Create output directory, and call script to get outputs
+    ./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL<y|n> n n OUTPUT_WIDTH OUTPUT_HEIGHT
+
+ODS-NET mesh-based re-rendering (replica dataset)
+=================================================
+1) Predict depth for each ODS pair in replica dataset
+    - Adapt the predict.py script in the ods-net repository
+
+2) Create a file containing the evaluation dataset dataset file names
+    - Each line is laid out as follows
+
+<ods_left_color>.png <ods_left_depth>.png
+
+3) Create a file containing the desired camera offsets for rendering
+    - Each line is laid out as follows
+
+<translate_x> <translate_y> <translate_z>
+
+4) Create output directory, and call script to get outputs
+    ./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL<y|n> y n OUTPUT_WIDTH OUTPUT_HEIGHT
+
+Naive mesh-based re-rendering (videos)
+======================================
+1) Extract frames from videos
+    - Use the `split_ods.py` script, or the `split_all_in_folder` script
+    - Specify the output resolution
+
+2) Create a file containing the evaluation dataset dataset file names
+    - Each line is laid out as follows
+
+<ods_left_color>.png <ods_left_depth>.png
+
+3) Create a file containing the desired camera offsets for rendering
+    - Each line is laid out as follows
+
+<translate_x> <translate_y> <translate_z>
+
+4) Create output directory, and call script to get outputs
+    ./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL<y|n> y y OUTPUT_WIDTH OUTPUT_HEIGHT
+
+ODS-NET mesh-based re-rendering (videos)
+========================================
+1) Predict depth video frames
+    - predict.py script supports running on videos directly
+    - collect outputs
+
+2) Create a file containing the evaluation dataset dataset file names
+    - Each line is laid out as follows
+
+<ods_left_color>.png <ods_left_depth>.png
+
+3) Create a file containing the desired camera offsets for rendering
+    - Each line is laid out as follows
+
+<translate_x> <translate_y> <translate_z>
+
+4) Create output directory, and call script to get outputs
+    ./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL<y|n> y n OUTPUT_WIDTH OUTPUT_HEIGHT
+
+Serrano et. al (videos with RGBD ERP)
+=====================================
+
+1) Extract frames from videos
+    - Use the `split.py` script, or the `split_all_in_folder_layered` script
+    - Specify the output resolution
+
+2) Create a file containing the evaluation dataset dataset file names
+    - Each line is laid out as follows
+
+<fg_color>.png <bg_color>.png <inp_color>.png <fg_depth>.png <bg_depth>.png <inp_depth>.png <fg_alpha>.png <bg_alpha>.png <inp_alpha>.png
+
+3) Create a file containing the desired camera offsets for rendering
+    - Each line is laid out as follows
+
+<translate_x> <translate_y> <translate_z>
+
+4) Create output directory, and call script to get outputs
+    ./build/ReplicaSDK/DepthMeshRendererLayeredBatch TEST_FILES_LAYERED CAMERA_POSES OUT_DIR SPHERICAL<y|n> OUTPUT_WIDTH OUTPUT_HEIGHT 

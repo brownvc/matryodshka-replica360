@@ -13,13 +13,15 @@
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==5, "Usage: ./ReplicaViewer COLOR DEPTH OUT_FILE SPHERICAL");
+  ASSERT(argc==7, "Usage: ./ReplicaViewer COLOR DEPTH OUT_FILE SPHERICAL ODS JUMP");
 
   const std::string colorFile = std::string(argv[1]);
   const std::string depthFile = std::string(argv[2]);
   const std::string out_file(argv[3]);
-  const std::string sphericalArg = std::string(argv[4]);
-  bool spherical = sphericalArg.compare(std::string("y")) == 0;
+
+  bool spherical = std::string(argv[4]).compare(std::string("y")) == 0;
+  bool ods = std::string(argv[5]).compare(std::string("y")) == 0;
+  bool jump = std::string(argv[6]).compare(std::string("y")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
   int width = 640;
@@ -47,7 +49,7 @@ int main(int argc, char* argv[]) {
           (height - 1.0f) / 2.0f,
           0.1f,
           100.0f),
-      pangolin::ModelViewLookAtRDF(0, 0, 0.3, 0, 0, 1, 0, 1, 0));
+      pangolin::ModelViewLookAtRDF(0, 0, 0.2, 0, 0, 1, 0, 1, 0));
 
   const std::string shadir = STR(SHADER_DIR);
 
@@ -59,8 +61,7 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<Shape> quad = DepthMesh::GenerateMeshData(width, height, spherical);
   DepthMesh depthMesh(
       quad,
-      colorFile, depthFile, "", false, spherical, true);
-  depthMesh.SetExposure(1.f);
+      colorFile, depthFile, "", false, spherical, ods, true, jump);
 
   // Render
   fbo.Bind();
@@ -103,3 +104,4 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
+

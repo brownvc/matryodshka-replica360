@@ -185,6 +185,10 @@ int main(int argc, char* argv[]) {
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> depthImage(width, height);
 
+
+  // Depth-based re-rendering
+  std::shared_ptr<Shape> quad = DepthMesh::GenerateMeshData(width, height, spherical);
+
   // pangolin::ManagedImage<float> depthImage(width, height);
   pangolin::ManagedImage<uint16_t> depthImageInt(width, height);
 
@@ -246,6 +250,7 @@ int main(int argc, char* argv[]) {
         glEnable(GL_CULL_FACE);
 
         ptexMesh.SetExposure(0.01);
+
         if(eye != 2){
           ptexMesh.SetBaseline(basel);
         }
@@ -311,6 +316,7 @@ int main(int argc, char* argv[]) {
 
         }
       }
+
 
       if(navCam){
         if(j+1<numSpots){
