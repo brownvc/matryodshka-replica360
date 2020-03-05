@@ -4,6 +4,8 @@
 #include <ctime>
 #include <pangolin/display/display.h>
 #include <pangolin/display/widgets/widgets.h>
+#include <chrono>
+#include <thread>
 
 std::vector<std::string> split(std::string str, char delimiter) {
   std::vector<std::string> internal;
@@ -106,6 +108,8 @@ int main(int argc, char* argv[]) {
   Eigen::Matrix4d spot_cam_to_world = s_cam.GetModelViewMatrix();
 
   for(int i = 0; i < test_files.size(); i++) {
+    std::cout << i << std::endl;
+
     // Transform
     Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
     T_translate.topRightCorner(3, 1) = Eigen::Vector3d(camera_poses[i][0], camera_poses[i][1], camera_poses[i][2]);
@@ -113,6 +117,13 @@ int main(int argc, char* argv[]) {
     s_cam.GetModelViewMatrix() = T_camera_world;
 
     // Generate meshes
+    ASSERT(pangolin::FileExists(test_files[i][0]));
+    ASSERT(pangolin::FileExists(test_files[i][1]));
+    ASSERT(pangolin::FileExists(test_files[i][2]));
+    ASSERT(pangolin::FileExists(test_files[i][3]));
+    ASSERT(pangolin::FileExists(test_files[i][4]));
+    ASSERT(pangolin::FileExists(test_files[i][5]));
+    ASSERT(pangolin::FileExists(test_files[i][6]));
     ASSERT(pangolin::FileExists(test_files[i][7]));
 
     DepthMesh depthMeshInp(

@@ -20,19 +20,20 @@ std::vector<std::string> split(std::string str, char delimiter) {
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==9, "Usage: ./ReplicaViewer TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL ODS JUMP WIDTH HEIGHT");
+  ASSERT(argc==10, "Usage: ./ReplicaViewer TEST_FILES CAMERA_POSES BASELINES OUT_DIR SPHERICAL ODS JUMP WIDTH HEIGHT");
 
   const std::string data_file = std::string(argv[1]);
   const std::string camera_poses_file(argv[2]);
-  const std::string out_dir = std::string(argv[3]);
+  const std::string baselines_file(argv[3]);
+  const std::string out_dir = std::string(argv[4]);
 
-  bool spherical = std::string(argv[4]).compare(std::string("y")) == 0;
-  bool ods = std::string(argv[5]).compare(std::string("y")) == 0;
-  bool jump = std::string(argv[6]).compare(std::string("y")) == 0;
+  bool spherical = std::string(argv[5]).compare(std::string("y")) == 0;
+  bool ods = std::string(argv[6]).compare(std::string("y")) == 0;
+  bool jump = std::string(argv[7]).compare(std::string("y")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
-  int width = std::stoi(std::string(argv[7]));
-  int height = std::stoi(std::string(argv[8]));
+  int width = std::stoi(std::string(argv[8]));
+  int height = std::stoi(std::string(argv[9]));
   std::cout << width << std::endl;
   std::cout << height << std::endl;
 
@@ -50,6 +51,24 @@ int main(int argc, char* argv[]) {
 
     while(ss >> value){
       camera_poses[c].push_back(value);
+    }
+
+    ++c;
+  }
+
+  // Get baselines
+  std::fstream in_bas(baselines_file);
+  std::vector<std::vector<float>> baselines;
+
+  c = 0;
+
+  while(std::getline(in_bas,line)){
+    float value;
+    std::stringstream ss(line);
+    baselines.push_back(std::vector<float>());
+
+    while(ss >> value){
+      baselines[c].push_back(value);
     }
 
     ++c;
@@ -112,6 +131,8 @@ int main(int argc, char* argv[]) {
     DepthMesh depthMesh(
         quad,
         test_files[i][0], test_files[i][1], "", false, spherical, ods, true, jump);
+
+    depthMesh.SetBaseline(baselines[i][0]);
 
     // Render
     fbo.Bind();

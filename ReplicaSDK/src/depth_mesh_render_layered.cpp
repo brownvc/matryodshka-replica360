@@ -78,10 +78,6 @@ int main(int argc, char* argv[]) {
       quad,
       colorFile, depthFile, alphaFile, true, spherical, false, false);
 
-  depthMeshInp.SetExposure(1.f);
-  depthMeshBg.SetExposure(1.f);
-  depthMeshFg.SetExposure(1.f);
-
   // First pass
   fbo1.Bind();
 

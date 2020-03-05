@@ -77,21 +77,11 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  int width = 1920;
-  int height = 1080;
+  int width = 640;
+  int height = 320;
 
-  // Downsample images
-  int width_ds = 540;
-  int height_ds = 270;
-  if(spherical){
-    width = 4096;
-    height = 2048;
-    width_ds = 640;
-    height_ds = 320;
-  }
-
-  bool renderDepth = false;
-  bool renderDepthOnly = true;
+  bool renderDepth = true;
+  bool renderDepthOnly = false;
   float depthScale = 65535.0f * 0.1f;
 
   // Setup EGL
@@ -202,7 +192,6 @@ int main(int argc, char* argv[]) {
 
   // rendering the dataset (double equirect pair + interpolation + extrapolation + forward extrapolation)
   for(size_t j=0; j<numSpots;j++){
-
       //get the modelview matrix with the navigable camera position specified in the text file
       Eigen::Matrix4d spot_cam_to_world = s_cam.GetModelViewMatrix();
 
@@ -213,7 +202,6 @@ int main(int argc, char* argv[]) {
       // 9,10,11: extrapolation spot
       // 12,13,14: gt depth for the erp in three tgt position
       for(int k =0; k<12;k++){
-
         int which_spot = k / 3;
         int eye= k % 3;
         float basel = cameraPos[j][3];
@@ -269,8 +257,8 @@ int main(int argc, char* argv[]) {
         if(spherical && !renderDepthOnly){
 
           char equirectFilename[1000];
-          snprintf(equirectFilename, 1000, "/media/battal/celsius-data/Replica-Dataset/equirectData/train_%dx%d/%s_%04zu_pos%02zu.jpeg",
-          width,height,navPositions.substr(0,navPositions.length()-9).c_str(),j,k);
+          snprintf(equirectFilename, 1000, "/data/datasets/6dof/equirectData/%s_%04zu_pos%02zu.png",
+          navPositions.substr(0,navPositions.length()-9).c_str(),j,k);
 
           pangolin::SaveImage(
               image.UnsafeReinterpret<uint8_t>(),
@@ -280,14 +268,14 @@ int main(int argc, char* argv[]) {
         }
         else if(!renderDepthOnly){
           char cmapFilename[1000];
-          snprintf(cmapFilename, 1000, "/media/battal/celsius-data/Replica-Dataset/cubemapData/%s_%04zu_pos%01zu.png",navPositions.substr(0,navPositions.length()-9).c_str(),j,k);
+          snprintf(cmapFilename, 1000, "/data/datasets/6dof/cubemapData/%s_%04zu_pos%01zu.png",navPositions.substr(0,navPositions.length()-9).c_str(),j,k);
           pangolin::SaveImage(
               image.UnsafeReinterpret<uint8_t>(),
               pangolin::PixelFormatFromString("RGB24"),
               std::string(cmapFilename));
         }
 
-        if( ( renderDepth || renderDepthOnly ) && (k==5 || k==8 || k==11)){
+        if( ( renderDepth || renderDepthOnly ) && (k==2)){
 
             depthFrameBuffer.Bind();
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -307,8 +295,8 @@ int main(int argc, char* argv[]) {
             depthTexture.Download(depthImage.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
             char filename[1000];
-            snprintf(filename, 1000, "/home/selenaling/Desktop/20191113_6DoF_TestSet/test_depth_%dx%d/%s_%04zu_pos%01zu.jpeg",
-            width,height,navPositions.substr(0,navPositions.length()-9).c_str(),j, 11+(k-2)/3); //map 5-12; 8-13; 11-14
+            snprintf(filename, 1000, "/data/datasets/6dof/depthData/%s_%04zu_pos%01zu.png",
+            navPositions.substr(0,navPositions.length()-9).c_str(),j, k);
              pangolin::SaveImage(
                 depthImage.UnsafeReinterpret<uint8_t>(),
                 pangolin::PixelFormatFromString("RGB24"),

@@ -24,8 +24,8 @@ int main(int argc, char* argv[]) {
   bool jump = std::string(argv[6]).compare(std::string("y")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
-  int width = 640;
-  int height = 320;
+  int width = 4096;
+  int height = 2048;
 
   // Setup EGL
   EGLCtx egl;
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
           (height - 1.0f) / 2.0f,
           0.1f,
           100.0f),
-      pangolin::ModelViewLookAtRDF(0, 0, 0.2, 0, 0, 1, 0, 1, 0));
+      pangolin::ModelViewLookAtRDF(0, 0, 0, 0, 0, 1, 0, 1, 0));
 
   const std::string shadir = STR(SHADER_DIR);
 

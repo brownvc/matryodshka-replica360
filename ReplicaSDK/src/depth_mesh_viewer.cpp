@@ -6,13 +6,14 @@
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==6, "Usage: ./ReplicaViewer COLOR DEPTH SPHERICAL ODS JUMP");
+  ASSERT(argc==7, "Usage: ./ReplicaViewer COLOR DEPTH BASELINE SPHERICAL ODS JUMP");
 
   const std::string colorFile = std::string(argv[1]);
   const std::string depthFile = std::string(argv[2]);
-  bool spherical = std::string(argv[3]).compare(std::string("y")) == 0;
-  bool ods = std::string(argv[4]).compare(std::string("y")) == 0;
-  bool jump = std::string(argv[5]).compare(std::string("y")) == 0;
+  bool spherical = std::string(argv[4]).compare(std::string("y")) == 0;
+  bool ods = std::string(argv[5]).compare(std::string("y")) == 0;
+  bool jump = std::string(argv[6]).compare(std::string("y")) == 0;
+  float baseline = std::stof(std::string(argv[3]));
 
   // Setup OpenGL Display (based on GLUT)
   const int uiWidth = 0;
@@ -41,6 +42,8 @@ int main(int argc, char* argv[]) {
   pangolin::View& container =
       pangolin::CreateDisplay().SetBounds(0, 1.0f, pangolin::Attach::Pix(uiWidth), 1.0f);
 
+  Eigen::Matrix4d start_mat = pangolin::ModelViewLookAtRDF(0, 0, 0, 0, 0, 1, 0, 1, 0);
+
   pangolin::OpenGlRenderState s_cam(
       pangolin::ProjectionMatrixRDF_TopLeft(
           width,
@@ -51,7 +54,7 @@ int main(int argc, char* argv[]) {
           (height - 1.0f) / 2.0f,
           0.1f,
           100.0f),
-      pangolin::ModelViewLookAtRDF(0, 0, 0, 0, 0, 1, 0, 1, 0));
+      start_mat);
 
   pangolin::Handler3D s_handler(s_cam);
 
@@ -67,7 +70,7 @@ int main(int argc, char* argv[]) {
       quad,
       colorFile, depthFile, "", false, spherical, ods, true, jump);
 
-  depthMesh.SetExposure(1.f);
+  depthMesh.SetBaseline(baseline);
 
   while (!pangolin::ShouldQuit()) {
     if (meshView.IsShown()) {

@@ -33,8 +33,13 @@ ODS-NET mesh-based re-rendering (replica dataset)
 
 <translate_x> <translate_y> <translate_z>
 
-4) Create output directory, and call script to get outputs
-    ./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL<y|n> y n OUTPUT_WIDTH OUTPUT_HEIGHT
+4) Create a file containing the ODS baselines
+    - Each line is laid out as follows
+
+<baseline_val>
+
+5) Create output directory, and call script to get outputs
+    ./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES BASELINES OUT_DIR SPHERICAL<y|n> y n OUTPUT_WIDTH OUTPUT_HEIGHT
 
 Naive mesh-based re-rendering (videos)
 ======================================
