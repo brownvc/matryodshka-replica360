@@ -39,7 +39,13 @@ void main()
         depth = textureLod(depthTex, uv, 0.0).x * 16;
     }
 
-    p = p * depth;
+    if(render_ods == 1) {
+        vec3 start_p = vec3(cos(2 * M_PI * uv.x), 0, sin(2 * M_PI * uv.x)) * baseline / 2;
+        p = start_p + p * depth;
+    }
+    else {
+        p = p * depth;
+    }
 
     // Clip distance
     gl_ClipDistance[0] = 1;

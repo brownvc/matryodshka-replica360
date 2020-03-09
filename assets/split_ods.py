@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--sample_rate', type=int, help='Sample rate for video', default=1)
 parser.add_argument('--width', type=int, help='Video width', default=640)
 parser.add_argument('--height', type=int, help='Video width', default=320)
+parser.add_argument('--max_frames', type=int, help='Max frames', default=1000)
 parser.add_argument('--output_dir', type=str, help='Output directory', default='output')
 parser.add_argument('--output_prefix', type=str, help='Output prefix', default='frame')
 parser.add_argument('--video', type=str, help='Video file', default='input.mp4')
@@ -35,7 +36,9 @@ cap = cv2.VideoCapture(args.video)
 length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 frame_num = 0
 
-for iter_num in tqdm(range(min(length, 1000))):
+print(args.video)
+
+for iter_num in tqdm(range(min(length, args.max_frames))):
     if iter_num % args.sample_rate == 0:
         ret, frame = cap.read()
 
@@ -44,9 +47,9 @@ for iter_num in tqdm(range(min(length, 1000))):
         right = frame[:frame.shape[0]//2, :, :]
 
         if args.flip_lr:
-            temp = left
-            left = right
-            right = temp
+            print("I'm here")
+            left = left[:, ::-1, :]
+            right = right[:, ::-1, :]
 
         # Resize images
         sigma = float(frame.shape[0]) / (2 * args.height)

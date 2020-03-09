@@ -21,7 +21,7 @@ std::vector<std::string> split(std::string str, char delimiter) {
 
 int main(int argc, char* argv[]) {
   // Command line args
-  ASSERT(argc==7, "Usage: ./ReplicaViewer TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL WIDTH HEIGHT");
+  ASSERT(argc==8, "Usage: ./ReplicaViewer TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL WIDTH HEIGHT START");
 
   const std::string data_file = std::string(argv[1]);
   const std::string camera_poses_file(argv[2]);
@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
   // Setup OpenGL Display (based on GLUT)
   int width = std::stoi(std::string(argv[5]));
   int height = std::stoi(std::string(argv[6]));
+  int start = std::stoi(std::string(argv[7]));
   std::cout << width << std::endl;
   std::cout << height << std::endl;
 
@@ -61,8 +62,6 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> files = split(line, ' ');
     test_files.push_back(files);
   }
-
-  ASSERT(test_files.size() == camera_poses.size(), "Number of provided examples and camera poses must be equal");
 
   // Setup EGL
   EGLCtx egl;
@@ -107,8 +106,9 @@ int main(int argc, char* argv[]) {
   // Save default model view matrix
   Eigen::Matrix4d spot_cam_to_world = s_cam.GetModelViewMatrix();
 
-  for(int i = 0; i < test_files.size(); i++) {
+  for(int i = start; i < camera_poses.size(); i++) {
     std::cout << i << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     // Transform
     Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
