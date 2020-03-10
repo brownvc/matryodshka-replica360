@@ -4,7 +4,10 @@
 #include <ctime>
 #include <pangolin/display/display.h>
 #include <pangolin/display/widgets/widgets.h>
-
+#include <bits/stdc++.h>
+#include <iostream>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 std::vector<std::string> split(std::string str, char delimiter) {
   std::vector<std::string> internal;
@@ -30,6 +33,7 @@ int main(int argc, char* argv[]) {
   bool spherical = std::string(argv[5]).compare(std::string("y")) == 0;
   bool ods = std::string(argv[6]).compare(std::string("y")) == 0;
   bool jump = std::string(argv[7]).compare(std::string("y")) == 0;
+  bool fixed_bl = std::string(argv[3]).compare(std::string("n")) == 0;
 
   // Setup OpenGL Display (based on GLUT)
   int width = std::stoi(std::string(argv[8]));
@@ -60,18 +64,21 @@ int main(int argc, char* argv[]) {
   std::fstream in_bas(baselines_file);
   std::vector<std::vector<float>> baselines;
 
-  c = 0;
+  if(!fixed_bl){
+    c = 0;
 
-  while(std::getline(in_bas,line)){
-    float value;
-    std::stringstream ss(line);
-    baselines.push_back(std::vector<float>());
+    while(std::getline(in_bas,line)){
+      float value;
+      std::stringstream ss(line);
+      baselines.push_back(std::vector<float>());
 
-    while(ss >> value){
-      baselines[c].push_back(value);
+      while(ss >> value){
+        baselines[c].push_back(value);
+      }
+
+      ++c;
     }
 
-    ++c;
   }
 
   // Get test files
@@ -123,7 +130,10 @@ int main(int argc, char* argv[]) {
   for(int i = 0; i < test_files.size(); i++) {
     // Transform
     Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
-    T_translate.topRightCorner(3, 1) = Eigen::Vector3d(camera_poses[i][0], camera_poses[i][1], camera_poses[i][2]);
+    // T_translate.topRightCorner(3, 1) = Eigen::Vector3d(camera_poses[i][0], camera_poses[i][1], camera_poses[i][2]);
+    T_translate.topRightCorner(3, 1) = Eigen::Vector3d(camera_poses[i][0], camera_poses[i][1], -camera_poses[i][2]);
+    // T_translate.topRightCorner(3, 1) = Eigen::Vector3d(camera_poses[i][2], camera_poses[i][2], camera_poses[i][0]);
+
     Eigen::Matrix4d T_camera_world = T_translate.inverse() * spot_cam_to_world;
     s_cam.GetModelViewMatrix() = T_camera_world;
 
@@ -132,7 +142,9 @@ int main(int argc, char* argv[]) {
         quad,
         test_files[i][0], test_files[i][1], "", false, spherical, ods, true, jump);
 
-    depthMesh.SetBaseline(baselines[i][0]);
+    if(!fixed_bl){
+      depthMesh.SetBaseline(baselines[i][0]);
+    }
 
     // Render
     fbo.Bind();
@@ -142,6 +154,7 @@ int main(int argc, char* argv[]) {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glEnable(GL_CULL_FACE);
 
+    // depthMesh.SetBaseline(0.0789946717611322);
     depthMesh.Render(s_cam);
 
     glDisable(GL_CULL_FACE);
@@ -152,8 +165,13 @@ int main(int argc, char* argv[]) {
     pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
     color_buffer.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
+    char dir[1000];
+    snprintf(dir, 1000, "mkdir %s%04d", out_dir.c_str(), i);
+    std::cout<<"Create new directory "<<dir<<std::endl;
+    int status = system(dir);
+
     char filename[1000];
-    snprintf(filename, 1000, "%s/out_%04d.png", out_dir.c_str(), i);
+    snprintf(filename, 1000, "%s/%04d/output_tgt_%04d.png", out_dir.c_str(), i, i);
 
     pangolin::SaveImage(
         image.UnsafeReinterpret<uint8_t>(),
@@ -163,5 +181,3 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-
-

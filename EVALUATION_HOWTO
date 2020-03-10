@@ -97,4 +97,4 @@ Serrano et. al (videos with RGBD ERP)
 <translate_x> <translate_y> <translate_z>
 
 4) Create output directory, and call script to get outputs
-    ./build/ReplicaSDK/DepthMeshRendererLayeredBatch TEST_FILES_LAYERED CAMERA_POSES OUT_DIR SPHERICAL<y|n> OUTPUT_WIDTH OUTPUT_HEIGHT 
+    ./build/ReplicaSDK/DepthMeshRendererLayeredBatch TEST_FILES_LAYERED CAMERA_POSES OUT_DIR SPHERICAL<y|n> OUTPUT_WIDTH OUTPUT_HEIGHT

@@ -22,6 +22,8 @@ DepthMesh::DepthMesh(const std::shared_ptr<Shape> &in_mesh,
     bool rL, bool rS, bool rO, bool fp, bool rJ) {
   // Check everything exists
   ASSERT(pangolin::FileExists(meshColor));
+  // std::cout<<meshDepth<<std::endl;
+
   ASSERT(pangolin::FileExists(meshDepth));
 
   if(rL && !fp) {
