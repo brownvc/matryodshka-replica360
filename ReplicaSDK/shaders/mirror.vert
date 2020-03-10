@@ -14,7 +14,7 @@ out block
     vec3 normal;
     vec3 eyeSpacePos;
     noperspective vec2 screenCoord;
-} Out;s
+} Out;
 
 void main()
 {
