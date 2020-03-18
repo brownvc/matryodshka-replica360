@@ -3,3 +3,7 @@ build
 *.swp
 dataset/
 test-dataset/
+test-glob/*.txt
+*.png
+*.jpg
+*.jpeg
