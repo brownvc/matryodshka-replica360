@@ -82,14 +82,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  // //perspective
-  // int width = 640;
-  // int height = 320;
-  // if(spherical){
-  //   width = 4096;
-  //   height = 2048;
-  // }
-
   bool renderDepth = true;
   float depthScale = 65535.0f * 0.1f;
 
@@ -142,6 +134,7 @@ int main(int argc, char* argv[]) {
   Eigen::Matrix4d T_camera_world = s_cam.GetModelViewMatrix();
 
   // For cubemap dataset: rotation matrix of 90 degree for each face of the cubemap
+  // t -> t -> t -> u -> d
   Eigen::Transform<double,3,Eigen::Affine> t(Eigen::AngleAxis<double>(0.5*M_PI,Eigen::Vector3d::UnitY()));
   Eigen::Transform<double,3,Eigen::Affine> u(Eigen::AngleAxis<double>(0.5*M_PI,Eigen::Vector3d::UnitX()));
   Eigen::Transform<double,3,Eigen::Affine> d(Eigen::AngleAxis<double>(M_PI,Eigen::Vector3d::UnitX()));
@@ -151,12 +144,6 @@ int main(int argc, char* argv[]) {
   R_side=t.matrix();
   R_up=u.matrix();
   R_down=d.matrix();
-
-  //move to the left for new spot
-  Eigen::Matrix4d T_new_old = Eigen::Matrix4d::Identity();
-  T_new_old.topRightCorner(3, 1) = Eigen::Vector3d(1, 0, 0);
-  Eigen::Matrix4d T_stereo = Eigen::Matrix4d::Identity();
-  T_stereo.topRightCorner(3, 1) = Eigen::Vector3d(0.2, 0, 0);
 
   // load mirrors
   std::vector<MirrorSurface> mirrors;
@@ -190,118 +177,229 @@ int main(int argc, char* argv[]) {
       //get the modelview matrix
       Eigen::Matrix4d spot_cam_to_world = s_cam.GetModelViewMatrix();
 
-      // rendering scheme [left_ods, right_ods, equirect]
-      // 0,1,2: input spot
-      // 3,4,5: interpolation spot
-      // 6,7,8: extrapolation spot
-      // 9,10,11: extrapolation spot
-      // 12,13,14: gt depth for the erp for three tgt position
-      for(int k =0; k<12;k++){
-        int which_spot = k / 3;
-        int eye= k % 3;
-        float basel = cameraPos[j][3];
+      if(spherical){
+        // double ods+eqr dataset
 
-        //translate to target position
-        if(which_spot == 1){
-          // interpolate frame to the right
-          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
-          T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][4], cameraPos[j][5], cameraPos[j][6]);
-          T_camera_world = T_translate.inverse() * spot_cam_to_world ;
-          s_cam.GetModelViewMatrix() = T_camera_world;
+        // rendering scheme [left_ods, right_ods, equirect]
+        // 0,1,2: input spot
+        // 3,4,5: interpolation spot
+        // 6,7,8: extrapolation spot
+        // 9,10,11: extrapolation spot
+        // 12,13,14: gt depth for the erp for three tgt position
+        for(int k =0; k<12;k++){
+          int which_spot = k / 3;
+          int eye= k % 3;
+          float basel = cameraPos[j][3];
 
-        }
-        else if(which_spot == 2){
-          // extrapolate frame to the right (?)
-          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
-          T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][7], cameraPos[j][8], cameraPos[j][9]);
-          T_camera_world = T_translate.inverse() * spot_cam_to_world ;
-          s_cam.GetModelViewMatrix() = T_camera_world;
-        }
-        else if(which_spot == 3){
-          // extrapolate frame to the left (?)
-          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
-          T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][10], cameraPos[j][11], cameraPos[j][12]);
-          T_camera_world = T_translate.inverse() * spot_cam_to_world ;
-          s_cam.GetModelViewMatrix() = T_camera_world;
-        }
+          //translate to target position
+          if(which_spot == 1){
+            // interpolate frame to the right
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][4], cameraPos[j][5], cameraPos[j][6]);
+            T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
 
-        //Render
-        frameBuffer.Bind();
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+          }
+          else if(which_spot == 2){
+            // extrapolate frame to the right (?)
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][7], cameraPos[j][8], cameraPos[j][9]);
+            T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+          }
+          else if(which_spot == 3){
+            // extrapolate frame to the left (?)
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][10], cameraPos[j][11], cameraPos[j][12]);
+            T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+          }
 
-        glPushAttrib(GL_VIEWPORT_BIT);
-        glViewport(0, 0, width, height);
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        glEnable(GL_CULL_FACE);
+          //Render
+          frameBuffer.Bind();
+          glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        //set parameters
-        ptexMesh.SetExposure(0.01);
-        if(eye != 2){
-          ptexMesh.SetBaseline(basel);
-        }
-        if(spherical){
-          ptexMesh.Render(s_cam,Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f),eye);
-        }else{
-          ptexMesh.Render(s_cam,Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
-        }
-        glDisable(GL_CULL_FACE);
-        glPopAttrib(); //GL_VIEWPORT_BIT
-        frameBuffer.Unbind();
+          glPushAttrib(GL_VIEWPORT_BIT);
+          glViewport(0, 0, width, height);
+          glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+          glEnable(GL_CULL_FACE);
 
-        // Download and save
-        render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
-        if(spherical){
+          //set parameters
+          ptexMesh.SetExposure(0.01);
+          if(eye != 2){
+            ptexMesh.SetBaseline(basel);
+          }
+          if(spherical){
+            ptexMesh.Render(s_cam,Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f),eye);
+          }else{
+            ptexMesh.Render(s_cam,Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+          }
+          glDisable(GL_CULL_FACE);
+          glPopAttrib(); //GL_VIEWPORT_BIT
+          frameBuffer.Unbind();
+
+          // Download and save
+          render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
           char equirectFilename[1000];
           snprintf(equirectFilename, 1000, "%s/%s_%04zu_pos%02zu.jpeg", outputDir.c_str(), scene.c_str(), j, k);
           pangolin::SaveImage(
               image.UnsafeReinterpret<uint8_t>(),
               pangolin::PixelFormatFromString("RGB24"),
               std::string(equirectFilename), 100.0);
-        }
-        else{
-          char cubemapFilename[1000];
-          snprintf(cubemapFilename, 1000, "%s/%s_%04zu_pos%01zu.jpeg", outputDir.c_str(), scene.c_str(), j, k);
-          pangolin::SaveImage(
-              image.UnsafeReinterpret<uint8_t>(),
-              pangolin::PixelFormatFromString("RGB24"),
-              std::string(cubemapFilename), 100.0);
+
+
+          if( renderDepth && (k==2 || k==5 || k== 8 || k==11)){
+              //render depth image for the equirect image
+              depthFrameBuffer.Bind();
+              glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+              glPushAttrib(GL_VIEWPORT_BIT);
+              glViewport(0, 0, width, height);
+              glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+              glEnable(GL_CULL_FACE);
+              ptexMesh.RenderDepth(s_cam, 1.f/ 16.f, Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f), eye);
+              glDisable(GL_CULL_FACE);
+              glPopAttrib(); //GL_VIEWPORT_BIT
+
+              depthFrameBuffer.Unbind();
+              depthTexture.Download(depthImage.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+
+              char filename[1000];
+              snprintf(filename, 1000, "%s/%s_%04zu_pos%02zu.jpeg", outputDir.c_str(), scene.c_str(), j, 11 + (k+1)/3 ); //11+(k+1)/3 maps 2-12; 5-13; 8-14; 11-15
+              pangolin::SaveImage(
+                depthImage.UnsafeReinterpret<uint8_t>(),
+                pangolin::PixelFormatFromString("RGB24"),
+                std::string(filename));
+          }
         }
 
-        if( renderDepth && (k==2 || k==5 || k== 8 || k==11)){
-            //render depth image for the equirect image
-            depthFrameBuffer.Bind();
+        if(navCam){
+          if(j+1<numSpots){
+            int cx = rand()%4;
+            int cy = rand()%4;
+            s_cam.SetModelViewMatrix(pangolin::ModelViewLookAtRDF(cameraPos[j+1][0],cameraPos[j+1][1],cameraPos[j+1][2], cx, cy, cameraPos[j+1][2], 0, 0, 1));
+          }
+        }else{
+          continue;
+        }
+        std::cout << "\r Spot " << j + 1  << "/" << numSpots << std::endl;
+
+      }else{
+        //cubemap dataset
+
+        //rendering scheme
+        //for each face of cubemap (i)
+        //k = 0,1: stereo input position
+        //k = 2: interpolate target position
+        //k = 3: extrapolate1 target position
+        //k = 4: extrapolate2 target position
+        //[if renderDepth = true]
+        //k = 5,6: stereo input depth
+        //k = 7: interpolate depth
+        //k = 8: extrapolate depth
+        //k = 9: extrapolate depth
+
+        float basel = cameraPos[j][3];
+
+        for(int i=0; i < 6; ++i){
+
+          Eigen::Matrix4d face_cam_to_world = s_cam.GetModelViewMatrix();
+          for(int k=0; k < 5; ++k){
+
+            // Render
+            frameBuffer.Bind();
+
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
             glPushAttrib(GL_VIEWPORT_BIT);
             glViewport(0, 0, width, height);
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             glEnable(GL_CULL_FACE);
-            ptexMesh.RenderDepth(s_cam, 1.f/ 16.f, Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f), eye);
+            ptexMesh.SetExposure(0.01);
+            ptexMesh.Render(s_cam,Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
             glDisable(GL_CULL_FACE);
             glPopAttrib(); //GL_VIEWPORT_BIT
 
-            depthFrameBuffer.Unbind();
-            depthTexture.Download(depthImage.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+            frameBuffer.Unbind();
 
-            char filename[1000];
-            snprintf(filename, 1000, "%s/%s_%04zu_pos%02zu.jpeg", outputDir.c_str(), scene.c_str(), j, 11 + (k+1)/3 ); //11+(k+1)/3 maps 2-12; 5-13; 8-14; 11-15
+            // Download and save
+            render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+
+            char cubemapFilename[1000];
+            snprintf(cubemapFilename, 1000, "%s/%s_%04zu_pos%01zu.jpeg", outputDir.c_str(), scene.c_str(), 6*j + i, k);
             pangolin::SaveImage(
-              depthImage.UnsafeReinterpret<uint8_t>(),
-              pangolin::PixelFormatFromString("RGB24"),
-              std::string(filename));
-        }
-      }
+                image.UnsafeReinterpret<uint8_t>(),
+                pangolin::PixelFormatFromString("RGB24"),
+                std::string(cubemapFilename), 100.0);
 
-      if(navCam){
-        if(j+1<numSpots){
-          int cx = rand()%4;
-          int cy = rand()%4;
-          s_cam.SetModelViewMatrix(pangolin::ModelViewLookAtRDF(cameraPos[j+1][0],cameraPos[j+1][1],cameraPos[j+1][2], cx, cy, cameraPos[j+1][2], 0, 0, 1));
+            if(renderDepth){
+              depthFrameBuffer.Bind();
+              glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+              glPushAttrib(GL_VIEWPORT_BIT);
+              glViewport(0, 0, width, height);
+              glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+              glEnable(GL_CULL_FACE);
+              ptexMesh.RenderDepth(s_cam, 1.f/16.f, Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+              glDisable(GL_CULL_FACE);
+
+              glPopAttrib(); //GL_VIEWPORT_BIT
+              depthFrameBuffer.Unbind();
+              depthTexture.Download(depthImage.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+
+              char depthfilename[1000];
+              snprintf(depthfilename, 1000, "%s/%s_%04zu_pos%01zu.jpeg", outputDir.c_str(), scene.c_str(), 6*j + i, k + 5 );
+              pangolin::SaveImage(
+                  depthImage.UnsafeReinterpret<uint8_t>(),
+                  pangolin::PixelFormatFromString("RGB24"),
+                  std::string(depthfilename));
+
+            }
+
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            if(k==0){
+              //translate to stereo right-eye position according to input baseline
+              T_translate.topRightCorner(3, 1) = Eigen::Vector3d(basel, 0, 0);
+              T_camera_world = T_translate.inverse() * face_cam_to_world ;
+              s_cam.GetModelViewMatrix() = T_camera_world;
+            }else if(k==1){
+              //translate to interpolate
+              T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][4], cameraPos[j][5], cameraPos[j][6]);
+              T_camera_world = T_translate.inverse() * face_cam_to_world ;
+              s_cam.GetModelViewMatrix() = T_camera_world;
+            }else if(k==2){
+              //translate to exptrapolate 1
+              T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][7], cameraPos[j][8], cameraPos[j][9]);
+              T_camera_world = T_translate.inverse() * face_cam_to_world ;
+              s_cam.GetModelViewMatrix() = T_camera_world;
+            }else if(k==3){
+              //translate to extrapolate 2
+              T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][10], cameraPos[j][11], cameraPos[j][12]);
+              T_camera_world = T_translate.inverse() * face_cam_to_world ;
+              s_cam.GetModelViewMatrix() = T_camera_world;
+            }
+
+          }
+
+          if(i<3){
+            //turn to the side
+            Eigen::Matrix4d curr_spot_cam_to_world = s_cam.GetModelViewMatrix();
+            T_camera_world = R_side.inverse() * curr_spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+
+          }else if(i==3){
+            //look upward by 90 degree
+            Eigen::Matrix4d curr_spot_cam_to_world = s_cam.GetModelViewMatrix();
+            T_camera_world = R_up.inverse() * curr_spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+
+          }else if(i==4){
+            //look downward by 180 degree
+            Eigen::Matrix4d curr_spot_cam_to_world = s_cam.GetModelViewMatrix();
+            T_camera_world = R_down.inverse() * curr_spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+          }
+
         }
-      }else{
-        continue;
       }
-      std::cout << "\r Spot " << j + 1  << "/" << numSpots << std::endl;
   }
 
   auto model_stop = high_resolution_clock::now();

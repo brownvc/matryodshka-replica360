@@ -252,7 +252,8 @@ int main(int argc, char* argv[]) {
 
 
           char cmapFilename[1000];
-          snprintf(cmapFilename, 1000, "/home/selenaling/Desktop/Replica-Dataset/build/ReplicaSDK/cubemapData/%s_%04zu_pos%01zu.png",navPositions.substr(0,navPositions.length()-4).c_str(),j,k);
+          snprintf(cmapFilename, 1000, "/home/selenaling/Desktop/Replica-Dataset/build/ReplicaSDK/cubemapData/%s_%04zu_pos%01zu.png",
+          navPositions.substr(0,navPositions.length()-4).c_str(),j,k);
 
           pangolin::SaveImage(
               image.UnsafeReinterpret<uint8_t>(),
