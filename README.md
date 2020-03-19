@@ -182,3 +182,21 @@ camera_position_x camera_position_y camera_position_z lookat_x lookat_y lookat_z
 ```
 
 Can use glob/gen_video_path.py to generate a candidate path text file. See glob/example_script for example.
+
+## Depth-based Mesh rendering
+Example Usage:
+```
+./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES OUT_DIR SPHERICAL<y|n> y y OUTPUT_WIDTH OUTPUT_HEIGHT
+
+```
+
+TEST_FILES should contain lines of format:
+```
+<ods_left_color>.png <ods_left_depth>.png
+```
+CAMERA_POSES should contain the desired camera offsets for rendering as below for each line:
+```
+<translate_x> <translate_y> <translate_z>
+```
+
+See more instructions in assets/EVALUATION_HOWTO.
