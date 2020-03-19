@@ -158,12 +158,12 @@ To render on one scene:
 ./build/ReplicaSDK/ReplicaRendererDataset path/to/scene/mesh.ply path/to/scene/textures path/to/scene/glass.sur camera_parameters.txt spherical[y/n] output/dir/ width height
 ```
 Format of one line in the input text file (camera_parameters.txt) should be:
-
+```
 camera_position_x, camera_position_y, camera_position_z, ods baseline,
 target1_offset_x, target1_offset_y, target1_offset_z,
 target2_offset_x, target2_offset_y, target2_offset_z,
 target3_offset_x, target3_offset_y, target3_offset_z,
-
+```
 
 ## Video rendering
 To render on one scene:
@@ -171,11 +171,12 @@ To render on one scene:
 ./build/ReplicaSDK/ReplicaVideoRenderer path/to/scene/mesh.ply path/to/scene/textures path/to/scene/glass.sur camera_parameters.txt spherical[y/n] output/dir/ width height
 ```
 Format of one line in the input text file (camera_parameters.txt) should be:
-
+```
 camera_position_x, camera_position_y, camera_position_z,
 lookat_x, lookat_y, lookat_z,
 ods baseline,
 rotation_x, rotation_y, rotation_z,
 target_x, target_y, target_z
+```
 
 To generate a candidate path text file, see glob/example_script.
