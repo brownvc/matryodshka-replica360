@@ -1,0 +1,1 @@
+python gen_video_path.py --scene room_0 --pathtype straight --nsteps 200 --baseline 0.032 --noise n --moveFactor 2 --output room_0_straight.txt --moveDir x

@@ -57,6 +57,18 @@ target_link_libraries(ReplicaRendererDataset
                       stdc++fs
 )
 
+add_executable(ReplicaVideoRenderer src/render_video.cpp src/MirrorSurface.cpp)
+
+target_link_libraries(ReplicaVideoRenderer
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+
 add_executable(ReplicaRenderer src/render.cpp src/MirrorSurface.cpp)
 
 target_link_libraries(ReplicaRenderer

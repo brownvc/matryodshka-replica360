@@ -11,7 +11,7 @@ See the [technical report](https://arxiv.org/abs/1906.05797) for more details.
 
 The Replica SDK contained in this repository allows visual inspection of the
 datasets via the ReplicaViewer and gives an example of how to render out images
-from the scenes headlessly via the ReplicaRenderer. 
+from the scenes headlessly via the ReplicaRenderer.
 
 For machine learning purposes each dataset also contains an export to the format
 employed by [AI Habitat](https://www.aihabitat.org/) and is therefore usable
@@ -42,12 +42,12 @@ Each Replica contains the following assets:
 ```
 ├── glass.sur
 ├── habitat
-    ├── mesh_semantic.ply 
+    ├── mesh_semantic.ply
     ├── mesh_semantic.navmesh
     ├── info_semantic.json
-    ├── mesh_preseg_semantic.ply 
+    ├── mesh_preseg_semantic.ply
     ├── mesh_preseg_semantic.navmesh
-    └── info_preseg_semantic.json 
+    └── info_preseg_semantic.json
 ├── mesh.ply
 ├── preseg.bin
 ├── preseg.json
@@ -67,7 +67,7 @@ The different files contain the following:
 - `preseg.json` and `preseg.bin`: the presegmentation in terms of planes and non-planes of the scene.
 - `semantic.json` and `semantic.bin`: the semantic segmentation of the scene.
 - `textures`: the high resolution and high dynamic range textures of the scene.
-- `habitat/mesh*semantic.ply`: the quad meshes including semantic or presegmentation information for AI Habitat. 
+- `habitat/mesh*semantic.ply`: the quad meshes including semantic or presegmentation information for AI Habitat.
 - `habitat/info*semantic.json`: mapping from instance IDs in the respective `mesh_*.ply` to semantic names.
 - `habitat/mesh*semantic.navmesh`: navigation grid for AI Habitat.
 
@@ -104,7 +104,7 @@ to be installed. If you wish to use the headless renderer ensure you have the li
 
 ### ReplicaViewer
 
-ReplicaViewer is an interactive UI to explore the Replica Dataset. 
+ReplicaViewer is an interactive UI to explore the Replica Dataset.
 
 ```
 ./build/bin/ReplicaViewer mesh.ply /path/to/atlases [mirrorFile]
@@ -113,13 +113,13 @@ ReplicaViewer is an interactive UI to explore the Replica Dataset.
 ![ReplicaViewer](./assets/ReplicaViewer.png)
 
 The exposure value for rendering from the HDR textures can be adjusted on the
-top left. 
+top left.
 
 ### ReplicaRenderer
 
 The ReplicaRenderer shows how to render out images from a Replica for a
 programmatically defined trajectory without UI. This executable can be run
-headless on a server if so desired. 
+headless on a server if so desired.
 
 ```
 ./build/bin/ReplicaRenderer mesh.ply textures glass.sur
@@ -133,7 +133,7 @@ After building the project you can launch the test viewer to verify that everyth
 ./build/viewer /PATH/TO/REPLICA/apartment_0/habitat/mesh_semantic.ply
 ```
 
-## Team 
+## Team
 
 Julian Straub,  Thomas Whelan, Lingni Ma, Yufan Chen, Erik Wijmans, Simon Green, Jakob J. Engel, Raul Mur-Artal, Carl Ren, Shobhit Verma, Anton Clarkson, Mingfei Yan, Brian Budge, Yajie Yan, Xiaqing Pan, June Yon, Yuyang Zou, Kimberly Leon, Nigel Carter, Jesus Briales,  Tyler Gillingham Elias Mueggler, Luis Pesqueira, Manolis Savva, Dhruv Batra, Hauke M. Strasdat, Renzo De Nardi, Michael Goesele, Steven Lovegrove, and Richard Newcombe.
 
@@ -148,3 +148,34 @@ The Replica dataset would not have been possible without the hard work and contr
 ## License
 
 See the LICENSE file for details.
+
+
+### Stereomag360 Add-ons
+
+## Dataset generation
+To render on one scene:
+```
+./build/ReplicaSDK/ReplicaRendererDataset path/to/scene/mesh.ply path/to/scene/textures path/to/scene/glass.sur camera_parameters.txt spherical[y/n] output/dir/ width height
+```
+Format of one line in the input text file (camera_parameters.txt) should be:
+
+camera_position_x, camera_position_y, camera_position_z, ods baseline,
+target1_offset_x, target1_offset_y, target1_offset_z,
+target2_offset_x, target2_offset_y, target2_offset_z,
+target3_offset_x, target3_offset_y, target3_offset_z,
+
+
+## Video rendering
+To render on one scene:
+```
+./build/ReplicaSDK/ReplicaVideoRenderer path/to/scene/mesh.ply path/to/scene/textures path/to/scene/glass.sur camera_parameters.txt spherical[y/n] output/dir/ width height
+```
+Format of one line in the input text file (camera_parameters.txt) should be:
+
+camera_position_x, camera_position_y, camera_position_z,
+lookat_x, lookat_y, lookat_z,
+ods baseline,
+rotation_x, rotation_y, rotation_z,
+target_x, target_y, target_z
+
+To generate a candidate path text file, see glob/example_script.

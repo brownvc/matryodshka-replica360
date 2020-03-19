@@ -1,0 +1,2 @@
+/home/selenaling/Desktop/stereomag360/supplement/videos/splittedFrames/oldpuppy00/o_pos0.png /home/selenaling/Desktop/stereomag360/supplement/results/ods-net/oldpuppy00/depth/im_0000.png
+/home/selenaling/Desktop/stereomag360/supplement/videos/splittedFrames/oldpuppy00/0_pos0.png /home/selenaling/Desktop/stereomag360/supplement/results/ods-net/oldpuppy00/depth/im_0001.png
