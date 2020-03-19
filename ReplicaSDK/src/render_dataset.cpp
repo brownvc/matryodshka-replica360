@@ -176,8 +176,51 @@ int main(int argc, char* argv[]) {
   for(size_t j=0; j<numSpots;j++){
       //get the modelview matrix
       Eigen::Matrix4d spot_cam_to_world = s_cam.GetModelViewMatrix();
+      if(!navCam){
+        //no txt file supplied, render a set of left ods, right ods, equirect
+        for(int eye =0; eye<3; ++eye){
 
-      if(spherical){
+          std::string type("lods");
+          if(eye==1){
+            type = "rods";
+          }else if(eye==2){
+            type = "eqr";
+          }
+          //Render
+          frameBuffer.Bind();
+          glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+          glPushAttrib(GL_VIEWPORT_BIT);
+          glViewport(0, 0, width, height);
+          glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+          glEnable(GL_CULL_FACE);
+
+          //set parameters
+          ptexMesh.SetExposure(0.01);
+          if(eye != 2){
+            ptexMesh.SetBaseline(0.032);
+          }
+          if(spherical){
+            ptexMesh.Render(s_cam, Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f), eye);
+          }else{
+            ptexMesh.Render(s_cam, Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+          }
+          glDisable(GL_CULL_FACE);
+          glPopAttrib(); //GL_VIEWPORT_BIT
+          frameBuffer.Unbind();
+
+          // Download and save
+          render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+          char equirectFilename[1000];
+          snprintf(equirectFilename, 1000, "%s/%s_%s.jpeg", outputDir.c_str(), scene.c_str(), type.c_str());
+          pangolin::SaveImage(
+              image.UnsafeReinterpret<uint8_t>(),
+              pangolin::PixelFormatFromString("RGB24"),
+              std::string(equirectFilename), 100.0);
+        }
+
+      }
+      else if(spherical){
         // double ods+eqr dataset
 
         // rendering scheme [left_ods, right_ods, equirect]

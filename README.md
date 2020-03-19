@@ -135,7 +135,7 @@ After building the project you can launch the test viewer to verify that everyth
 
 ## Team
 
-Julian Straub,  Thomas Whelan, Lingni Ma, Yufan Chen, Erik Wijmans, Simon Green, Jakob J. Engel, Raul Mur-Artal, Carl Ren, Shobhit Verma, Anton Clarkson, Mingfei Yan, Brian Budge, Yajie Yan, Xiaqing Pan, June Yon, Yuyang Zou, Kimberly Leon, Nigel Carter, Jesus Briales,  Tyler Gillingham Elias Mueggler, Luis Pesqueira, Manolis Savva, Dhruv Batra, Hauke M. Strasdat, Renzo De Nardi, Michael Goesele, Steven Lovegrove, and Richard Newcombe.
+Julian Straub, Thomas Whelan, Lingni Ma, Yufan Chen, Erik Wijmans, Simon Green, Jakob J. Engel, Raul Mur-Artal, Carl Ren, Shobhit Verma, Anton Clarkson, Mingfei Yan, Brian Budge, Yajie Yan, Xiaqing Pan, June Yon, Yuyang Zou, Kimberly Leon, Nigel Carter, Jesus Briales,  Tyler Gillingham Elias Mueggler, Luis Pesqueira, Manolis Savva, Dhruv Batra, Hauke M. Strasdat, Renzo De Nardi, Michael Goesele, Steven Lovegrove, and Richard Newcombe.
 
 ## Contact
 
@@ -151,32 +151,34 @@ See the LICENSE file for details.
 
 
 ### Stereomag360 Add-ons
+The original ReplicaRenderer and ReplicaViewer remain the same. See above for usage.
 
-## Dataset generation
-To render on one scene:
+## ODS-ODS-ERP Dataset generation
+For example, to render an example set of [left_ods, right_ods, equirect] images of room_0 (with a hardcoded position):
 ```
-./build/ReplicaSDK/ReplicaRendererDataset path/to/scene/mesh.ply path/to/scene/textures path/to/scene/glass.sur camera_parameters.txt spherical[y/n] output/dir/ width height
+./build/ReplicaSDK/ReplicaRendererDataset dataset/room_0/mesh.ply dataset/room_0/textures dataset/room_0/glass.sur n y output/dir/ width height
 ```
+
+To render on room_0 with txt files:
+```
+./build/ReplicaSDK/ReplicaRendererDataset dataset/room_0/mesh.ply dataset/room_0/textures dataset/room_0/glass.sur glob/room_0.txt y output/dir/ width height
+```
+
 Format of one line in the input text file (camera_parameters.txt) should be:
 ```
-camera_position_x, camera_position_y, camera_position_z, ods baseline,
-target1_offset_x, target1_offset_y, target1_offset_z,
-target2_offset_x, target2_offset_y, target2_offset_z,
-target3_offset_x, target3_offset_y, target3_offset_z,
+camera_position_x camera_position_y camera_position_z ods_baseline target1_offset_x target1_offset_y target1_offset_z target2_offset_x target2_offset_y target2_offset_z target3_offset_x target3_offset_y target3_offset_z
 ```
+Find all the existing text files in glob/ and test-glob/.
+
 
 ## Video rendering
 To render on one scene:
 ```
 ./build/ReplicaSDK/ReplicaVideoRenderer path/to/scene/mesh.ply path/to/scene/textures path/to/scene/glass.sur camera_parameters.txt spherical[y/n] output/dir/ width height
 ```
-Format of one line in the input text file (camera_parameters.txt) should be:
+The difference is the format of one line in input text file (camera_parameters.txt), which for video should be:
 ```
-camera_position_x, camera_position_y, camera_position_z,
-lookat_x, lookat_y, lookat_z,
-ods baseline,
-rotation_x, rotation_y, rotation_z,
-target_x, target_y, target_z
+camera_position_x camera_position_y camera_position_z lookat_x lookat_y lookat_z ods_baseline rotation_x rotation_y rotation_z target_x target_y target_z
 ```
 
-To generate a candidate path text file, see glob/example_script.
+Can use glob/gen_video_path.py to generate a candidate path text file. See glob/example_script for example.
