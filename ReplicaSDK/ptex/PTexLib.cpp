@@ -13,12 +13,13 @@
 #include <fstream>
 #include <unordered_map>
 
-PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder, bool rS) {
+PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder, bool rS, bool rOF) {
   // Check everything exists
   ASSERT(pangolin::FileExists(meshFile));
   ASSERT(pangolin::FileExists(atlasFolder));
 
   renderSpherical = rS;
+  renderOpticalFlow = rOF;
 
   // Parse parameters
   const std::string paramsFile = atlasFolder + "/parameters.json";
@@ -49,12 +50,19 @@ PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder, 
   const std::string shadir = STR(SHADER_DIR);
   ASSERT(pangolin::FileExists(shadir), "Shader directory not found!");
 
-  if(renderSpherical){
+  if(renderSpherical && !renderOpticalFlow){
     shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-ptex-spherical.vert", {}, {shadir});
     shader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/mesh-ptex-spherical.geom", {}, {shadir});
     shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-ptex.frag", {}, {shadir});
     shader.Link();
 
+  }
+  else if(renderSpherical && renderOpticalFlow)
+  {
+    shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/opticalflow/rgb.vert", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/opticalflow/rgb.geom", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/opticalflow/rgb.frag", {}, {shadir});
+    shader.Link();
   }
   else{
     shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-ptex.vert", {}, {shadir});
@@ -64,19 +72,33 @@ PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder, 
 
   }
 
-  if(renderSpherical){
+  if(renderSpherical && !renderOpticalFlow){
     depthShader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-depth-spherical.vert", {}, {shadir});
     depthShader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/mesh-depth-spherical.geom", {}, {shadir});
     depthShader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-depth.frag", {}, {shadir});
     depthShader.Link();
 
-
-  }else{
+  }
+  else if(renderSpherical && renderOpticalFlow)
+  {
+    depthShader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/opticalflow/depth.vert", {}, {shadir});
+    depthShader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/opticalflow/depth.geom", {}, {shadir});
+    depthShader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/opticalflow/depth.frag", {}, {shadir});
+    depthShader.Link();
+  }
+  else{
     depthShader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-depth.vert", {}, {shadir});
     depthShader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-depth.frag", {}, {shadir});
     depthShader.Link();
 
 
+  }
+
+  if(renderSpherical && renderOpticalFlow){
+    opticalflowShader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/opticalflow/opticalflow.vert", {}, {shadir});
+    opticalflowShader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/opticalflow/opticalflow.geom", {}, {shadir});
+    opticalflowShader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/opticalflow/opticalflow.frag", {}, {shadir});
+    opticalflowShader.Link();
   }
 
 }
@@ -252,6 +274,48 @@ void PTexMesh::RenderSubMeshDepth(
   }
 }
 
+void PTexMesh::RenderSubMeshOpticalFlow(
+    size_t subMesh,
+    const pangolin::OpenGlRenderState& cam_currnet,
+    const pangolin::OpenGlRenderState& cam_next,
+    const int image_width,
+    const int image_height ) {
+
+  ASSERT(subMesh < meshes.size());
+  Mesh& mesh = *meshes[subMesh];
+
+  if(!renderOpticalFlow || !renderSpherical)
+  {
+    throw std::invalid_argument("The optical flow render does not support the perspective camera module.");
+  }
+
+  // int currFrontFace;
+  // glGetIntegerv(GL_FRONT_FACE, &currFrontFace);
+  // //Drawing the faces has the opposite winding order to the GL_LINES_ADJACENCY
+  // glFrontFace(currFrontFace == GL_CW ? GL_CCW : GL_CW);
+  // glPushAttrib(GL_POLYGON_BIT);
+
+  opticalflowShader.Bind();
+  opticalflowShader.SetUniform("MV_current", cam_currnet.GetModelViewMatrix());
+  opticalflowShader.SetUniform("MV_next", cam_next.GetModelViewMatrix());
+  opticalflowShader.SetUniform("window_size",(float)image_width, (float)image_height);
+
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.abo.bo);
+  mesh.vbo.Bind();
+  glVertexAttribPointer(0, mesh.vbo.count_per_element, mesh.vbo.datatype, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  mesh.vbo.Unbind();
+
+  mesh.ibo.Bind();
+  // using GL_LINES_ADJACENCY here to send quads to geometry shader
+  glDrawElements(GL_LINES_ADJACENCY, mesh.ibo.num_elements, mesh.ibo.datatype, 0);
+  mesh.ibo.Unbind();
+
+  glDisableVertexAttribArray(0);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+  opticalflowShader.Unbind();
+}
+
 void PTexMesh::Render(const pangolin::OpenGlRenderState& cam, const Eigen::Vector4f& clipPlane, int lrC) {
   for (size_t i = 0; i < meshes.size(); i++) {
     RenderSubMesh(i, cam, clipPlane, lrC);
@@ -261,6 +325,13 @@ void PTexMesh::Render(const pangolin::OpenGlRenderState& cam, const Eigen::Vecto
 void PTexMesh::RenderDepth(const pangolin::OpenGlRenderState& cam, const float depthScale, const Eigen::Vector4f& clipPlane, int lrC) {
   for (size_t i = 0; i < meshes.size(); i++) {
     RenderSubMeshDepth(i, cam, depthScale, clipPlane, lrC);
+  }
+}
+
+void PTexMesh::RenderOpticalFlow(const pangolin::OpenGlRenderState& cam_currnet, 
+      const pangolin::OpenGlRenderState& cam_next, const int image_width, const int image_height) {
+  for (size_t i = 0; i < meshes.size(); i++) {
+    RenderSubMeshOpticalFlow(i, cam_currnet, cam_next, image_width, image_height);
   }
 }
 
@@ -615,6 +686,8 @@ void PTexMesh::LoadAtlasData(const std::string& atlasFolder) {
       meshes[i]->atlas.Reinitialise(dim, dim, GL_RGBA16F, false, 0, GL_RGB, GL_HALF_FLOAT);
       isHdr = true;
     } else {
+      std::string msg = "Can't parse texture filename " + atlasFolder + "/" + std::to_string(i) + "\n";
+      printf("%s", msg.c_str());
       ASSERT(false, "Can't parse texture filename " + atlasFolder + "/" + std::to_string(i));
     }
   }

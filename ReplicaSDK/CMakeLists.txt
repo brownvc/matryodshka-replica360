@@ -35,6 +35,17 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${dl_INCLUDE_DIRS})
 include_directories("./include")
 
+add_executable(ReplicaOpticalFlow src/render_optical_flow.cpp src/MirrorSurface.cpp)
+
+target_link_libraries(ReplicaOpticalFlow
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
 add_executable(ReplicaViewer src/viewer.cpp src/MirrorSurface.cpp)
 
 target_link_libraries(ReplicaViewer

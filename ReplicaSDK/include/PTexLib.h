@@ -14,7 +14,7 @@
 
 class PTexMesh {
  public:
-  PTexMesh(const std::string& meshFile, const std::string& atlasFolder, bool renderSpherical);
+  PTexMesh(const std::string& meshFile, const std::string& atlasFolder, bool renderSpherical, bool renderOpticalFlow = false);
 
   virtual ~PTexMesh();
 
@@ -31,6 +31,13 @@ class PTexMesh {
       const Eigen::Vector4f& clipPlane,
       int lrC = 0);
 
+  void RenderSubMeshOpticalFlow(
+      size_t subMesh,
+      const pangolin::OpenGlRenderState& cam,
+      const pangolin::OpenGlRenderState& cam_pre,
+      const int image_width,
+      const int image_height);
+
   void Render(
       const pangolin::OpenGlRenderState& cam,
       const Eigen::Vector4f& clipPlane = Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f),
@@ -45,6 +52,12 @@ class PTexMesh {
     const float depthScale=1.0f,
     const Eigen::Vector4f& clipPlane = Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f),
     int lrC = 0);
+
+  void RenderOpticalFlow(
+    const pangolin::OpenGlRenderState& cam,
+    const pangolin::OpenGlRenderState& cam_pre,
+    const int image_width,
+    const int image_height);
 
   float Exposure() const;
   void SetExposure(const float& val);
@@ -80,9 +93,11 @@ class PTexMesh {
   uint32_t tileSize = 0;
 
   bool renderSpherical=false;
+  bool renderOpticalFlow=false;
 
   pangolin::GlSlProgram shader;
   pangolin::GlSlProgram depthShader;
+  pangolin::GlSlProgram opticalflowShader;
 
   float exposure = 1.0f;
   float gamma = 1.0f;
