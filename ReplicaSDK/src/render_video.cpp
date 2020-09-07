@@ -92,14 +92,7 @@ int main(int argc, char* argv[]) {
   egl.PrintInformation();
 
   //Don't draw backfaces
-  GLenum frontFace = GL_CW;
-  if(spherical){
-    glFrontFace(frontFace);
-  }
-  else{
-    frontFace = GL_CCW;
-    glFrontFace(frontFace);
-  }
+  glFrontFace(GL_CCW);
 
   // Setup a framebuffer
   pangolin::GlTexture render(width, height);
@@ -148,6 +141,7 @@ int main(int argc, char* argv[]) {
 
   // load mesh and textures
   PTexMesh ptexMesh(meshFile, atlasFolder, spherical);
+    printf("-----------");
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> depthImage(width, height);
 
