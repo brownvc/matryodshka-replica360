@@ -56,7 +56,7 @@ void main()
     p = (MV * vec4(p, 1)).xyz;
 
     // Angles from direction vector
-    float theta = - atan(p.z, p.x);
+    float theta = - atan(d.x, d.z);
     float phi = - atan(p.y, sqrt(p.x * p.x + p.z * p.z));
 
     // Normalize to clip space

@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
   glEnable(GL_DEPTH_TEST);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  const GLenum frontFace = GL_CW;
+  const GLenum frontFace = GL_CCW;
   glFrontFace(frontFace);
   glLineWidth(1.0f);
 

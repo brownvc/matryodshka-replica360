@@ -45,7 +45,7 @@ void main()
     if(leftRight!=2){
       if(disc < 0){
           d=p;
-          float theta = - atan(d.z, d.x);
+          float theta = - atan(d.x, d.z);
           float phi = - atan(d.y, sqrt(d.x * d.x + d.z * d.z));
           vec4 pos;
           pos.x = (-theta / (M_PI) + 0.0) * 1;
@@ -87,7 +87,7 @@ void main()
     }
 
     // Angles from direction vector
-    float theta = - atan(d.z, d.x);
+    float theta = - atan(d.x, d.z);
     float phi = - atan(d.y, sqrt(d.x * d.x + d.z * d.z));
 
     // Normalize to clip space

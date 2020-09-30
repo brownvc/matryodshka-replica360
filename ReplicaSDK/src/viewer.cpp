@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  const GLenum frontFace = GL_CW;
+  const GLenum frontFace = GL_CCW;
   glFrontFace(frontFace);
   glLineWidth(1.0f);
 
