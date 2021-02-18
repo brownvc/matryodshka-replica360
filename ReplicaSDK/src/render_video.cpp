@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
   srand(2019); //random seed
 
   for(size_t j=0; j<numFrames;j++){
-      //get the modelview matrix
+      //get the model view matrix
       Eigen::Matrix4d spot_cam_to_world = s_cam.GetModelViewMatrix();
 
       //video frame rendering scheme:
@@ -171,10 +171,15 @@ int main(int argc, char* argv[]) {
        int which_spot = k / 3;
        int eye = k % 3;
        float basel = cameraPos[j][6];
+
        if(which_spot == 1){
          Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
          T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][10], cameraPos[j][11], cameraPos[j][12]);
          T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+         std::cout<<"target spot:"<<std::endl;
+         std::cout<<T_translate<<std::endl;
+         std::cout<<spot_cam_to_world<<std::endl;
+         std::cout<<T_camera_world<<std::endl;
          s_cam.GetModelViewMatrix() = T_camera_world;
        }
 
@@ -222,8 +227,10 @@ int main(int argc, char* argv[]) {
            pangolin::SaveImage(
                depthImage.UnsafeReinterpret<uint8_t>(),
                pangolin::PixelFormatFromString("RGB24"),
-               std::string(filename));
-             }
+               std::string(filename)
+             );
+           }
+
        if (saveParameter) {
          //calculate and save the quaternion
          T_camera_world = s_cam.GetModelViewMatrix();
