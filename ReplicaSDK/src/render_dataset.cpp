@@ -90,14 +90,9 @@ int main(int argc, char* argv[]) {
   egl.PrintInformation();
 
   //Don't draw backfaces
-  GLenum frontFace = GL_CW;
-  if(spherical){
-    glFrontFace(frontFace);
-  }
-  else{
-    frontFace = GL_CCW;
-    glFrontFace(frontFace);
-  }
+  GLenum frontFace = GL_CCW;
+  glFrontFace(frontFace);
+
 
   // Setup a framebuffer
   pangolin::GlTexture render(width, height);

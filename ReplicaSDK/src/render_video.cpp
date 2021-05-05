@@ -223,7 +223,7 @@ int main(int argc, char* argv[]) {
            depthTexture.Download(depthImage.ptr, GL_RGB, GL_UNSIGNED_BYTE);
 
            char filename[1000];
-           snprintf(filename, 1000,"%s/%s_%04zu_pos%01d.jpeg",outputDir.c_str(), scene.c_str(), j, 5+(k+1)/3);
+           snprintf(filename,1000,"%s/%s_%04zu_pos%01d.jpeg",outputDir.c_str(), scene.c_str(), j, 5+(k+1)/3);
            pangolin::SaveImage(
                depthImage.UnsafeReinterpret<uint8_t>(),
                pangolin::PixelFormatFromString("RGB24"),
@@ -314,7 +314,6 @@ int main(int argc, char* argv[]) {
            T_camera_world = R_Z * R_Y * R_X * T_camera_world;
            s_cam.GetModelViewMatrix() = T_camera_world;
          }
-
        }
      }else{
        continue;

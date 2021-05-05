@@ -3,7 +3,6 @@
 #include <ctime>
 #include <pangolin/display/display.h>
 #include <pangolin/display/widgets/widgets.h>
-
 #include "MirrorRenderer.h"
 
 int main(int argc, char* argv[]) {
@@ -23,7 +22,6 @@ int main(int argc, char* argv[]) {
       spherical=true;
     }else{
       ASSERT(pangolin::FileExists(surfaceFile));
-
     }
   }
 
@@ -115,6 +113,7 @@ int main(int argc, char* argv[]) {
   pangolin::Var<bool> drawDepth("ui.Draw_depth", false, true);
 
   ptexMesh.SetExposure(exposure);
+  //glDisable(GL_CULL_FACE);
 
   while (!pangolin::ShouldQuit()) {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -148,7 +147,6 @@ int main(int argc, char* argv[]) {
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
         glEnable(GL_CULL_FACE);
-
         ptexMesh.Render(s_cam);
         glDisable(GL_CULL_FACE);
 

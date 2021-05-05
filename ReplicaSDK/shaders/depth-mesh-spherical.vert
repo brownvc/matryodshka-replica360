@@ -28,11 +28,9 @@ void main()
         cos(M_PI * uv.y),
         sin(M_PI * uv.y) * sin(2 * M_PI * uv.x));
 
-
     // Offset by depth
     vec4 texel;
     float depth;
-
     if(render_jump == 1) {
         depth = textureLod(depthTex, uv, 0.0).x;
         depth = 0.299999999999999999f / (depth + 0.001f);

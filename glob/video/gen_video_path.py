@@ -191,7 +191,7 @@ def gen_square_path(scene_name, steps, baseline, noise, moveFactor, file2save):
 
 def gen_circle_path(scene_name, steps, baseline, r, noise, moveFactor, file2save):
 
-    scenePos = open(scene_name+".txt", "r")
+    scenePos = open("/home/selenaling/Desktop/matryodshka-replica360/glob/train/"+scene_name+"_6dof.txt", "r")
     data = [[float(i) for i in line.split()] for line in scenePos]
 
     #samples a random valid starting position
@@ -205,8 +205,7 @@ def gen_circle_path(scene_name, steps, baseline, r, noise, moveFactor, file2save
     offset_y = 0.064 * moveFactor
     offset_z = 0.064 * moveFactor
 
-    print("Sampled starting position:", cx, cy, cz, "with baseline of ",baseline, "and offset by ", offset_x, offset_y, offset_z)
-
+    print("Sampled starting position:", cx, cy, cz, "with baseline of ", baseline, " and offset by ", offset_x, offset_y, offset_z)
     if(noise):
         time_series = gen_time_series('noise/data.csv')
         time_series_xradian = gen_time_series('noise/data-rotx.csv')
@@ -229,9 +228,9 @@ def gen_circle_path(scene_name, steps, baseline, r, noise, moveFactor, file2save
         ny = cy - math.sin(rad)*r
         nz = cz
 
-        spot += [nx, ny, nz+ztime_series[i]]
-        spot += [nx + (nx-cx), ny + (ny-cy), cz+ztime_series[i]]
-        spot += baseline
+        spot += [nx, ny, nz]
+        spot += [nx + (nx-cx), ny + (ny-cy), cz]
+        spot += [baseline]
         if(noise):
             spot += [radx[i], rady[i], radz[i]]
         else:

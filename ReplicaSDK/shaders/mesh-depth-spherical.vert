@@ -45,17 +45,15 @@ void main()
     if(leftRight!=2){
       if(disc < 0){
           d=p;
-          float theta = - atan(d.z, d.x);
-          float phi = - atan(d.y, sqrt(d.x * d.x + d.z * d.z));
+
+          float theta = atan(d.x, d.z);
+          float phi = atan(d.y, sqrt(d.x * d.x + d.z * d.z));
           vec4 pos;
-          pos.x = (-theta / (M_PI) + 0.0) * 1;
-          pos.y = (-phi / (M_PI / 2) + 0.0) * 1;
+          pos.x = (theta / (M_PI) + 0.0) * 1;
+          pos.y = (phi / (M_PI / 2) + 0.0) * 1;
           pos.z = abs(length(p.xyz)) / 20;
           pos.w = 1;
-
           gl_Position = pos;
-
-          //gl_Position = vec4(0, 0, 0, 0);
           return;
       }
     }
@@ -87,13 +85,13 @@ void main()
     }
 
     // Angles from direction vector
-    float theta = - atan(d.z, d.x);
-    float phi = - atan(d.y, sqrt(d.x * d.x + d.z * d.z));
+    float theta = atan(d.x, d.z);
+    float phi = atan(d.y, sqrt(d.x * d.x + d.z * d.z));
 
     // Normalize to clip space
     vec4 pos;
-    pos.x = (-theta / (M_PI) + 0.0) * 1;
-    pos.y = (-phi / (M_PI / 2) + 0.0) * 1;
+    pos.x = (theta / (M_PI) + 0.0) * 1;
+    pos.y = (phi / (M_PI / 2) + 0.0) * 1;
     pos.z = abs(length(p.xyz)) / 20;
     pos.w = 1;
 

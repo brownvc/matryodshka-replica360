@@ -17,26 +17,21 @@ PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder, 
   // Check everything exists
   ASSERT(pangolin::FileExists(meshFile));
   ASSERT(pangolin::FileExists(atlasFolder));
-
   renderSpherical = rS;
 
   // Parse parameters
   const std::string paramsFile = atlasFolder + "/parameters.json";
 
   ASSERT(pangolin::FileExists(paramsFile));
-
   std::ifstream file(paramsFile);
   picojson::value json;
   picojson::parse(json, file);
-
   ASSERT(json.contains("splitSize"), "Missing splitSize in parameters.json");
   ASSERT(json.contains("tileSize"), "Missing tileSize in parameters.json");
 
   splitSize = json["splitSize"].get<double>();
   tileSize = json["tileSize"].get<int64_t>();
-
   LoadMeshData(meshFile);
-
   LoadAtlasData(atlasFolder);
   if (isHdr) {
     // set defaults for HDR scene
@@ -54,7 +49,6 @@ PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder, 
     shader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/mesh-ptex-spherical.geom", {}, {shadir});
     shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-ptex.frag", {}, {shadir});
     shader.Link();
-
   }
   else{
     shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-ptex.vert", {}, {shadir});
