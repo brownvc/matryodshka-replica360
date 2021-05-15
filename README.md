@@ -11,7 +11,7 @@ To generate the training and testing dataset used in [Matryodshka](https://githu
 ./scripts/gen-3dof-360-*-data.sh OUTPUT_DIR WIDTH HEIGHT
 ```
 
-###Basic Usage
+### Basic Usage
 ```
 ./build/ReplicaSDK/ReplicaRendererDataset dataset/scene_name/mesh.ply 
 dataset/scene_name/textures dataset/scene_name/glass.sur camera_parameters[file.txt / n] 
@@ -48,7 +48,7 @@ To generate a video path, one can use `glob/gen_video_path.py`. See `glob/exampl
 
 ## Depth-based Mesh rendering
 This repo also support depth-based mesh rendering as in <em>Motion parallax for 360° RGBD video</em> [[2]](#2)
-###Basic Usage:
+### Basic Usage:
 ```
 ./build/ReplicaSDK/DepthMeshRendererBatch images.txt camera_poses.txt 
 OUT_DIR SPHERICAL<y|n> y y OUTPUT_WIDTH OUTPUT_HEIGHT
