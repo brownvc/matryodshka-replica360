@@ -1,67 +1,65 @@
-# Stereomag360 Add-ons
-The original ReplicaRenderer and ReplicaViewer remain the same. See below for usage.
+# Replica 360 Dataset
+The original ReplicaRenderer and ReplicaViewer remain the same. See [original repo](https://github.com/facebookresearch/Replica-Dataset) for basic usage. See below for 360 dataset generation.
 
-## ODS-ODS-ERP Dataset generation
-Usage:
+## Setup
+* Run `./download.sh` to download the mesh files.
+* Run `./build.sh` to build all executables.
+
+## 360 Dataset generation
+To generate the training and testing dataset used in [Matryodshka](https://github.com/brownvc/matryodshka) repo [[1]](#1), run 
+```
+./scripts/gen-3dof-360-*-data.sh OUTPUT_DIR WIDTH HEIGHT
+```
+
+###Basic Usage
 ```
 ./build/ReplicaSDK/ReplicaRendererDataset dataset/scene_name/mesh.ply 
 dataset/scene_name/textures dataset/scene_name/glass.sur camera_parameters[file.txt / n] 
 spherical[y/n] output/dir/ output_width output_height
 ```
 
-For example, to render an example set of [left_ods, right_ods, equirect] images of room_0 (with a hardcoded position):
-```
-./build/ReplicaSDK/ReplicaRendererDataset dataset/room_0/mesh.ply 
-dataset/room_0/textures dataset/room_0/glass.sur n y output/dir/ width height
-```
-
-To render on room_0 with txt files:
-```
-./build/ReplicaSDK/ReplicaRendererDataset dataset/room_0/mesh.ply 
-dataset/room_0/textures dataset/room_0/glass.sur glob/room_0.txt y output/dir/ width height
-```
-
-Format of one line in the input text file (camera_parameters.txt) should be:
+The data generation takes in a text file specifying the camera position, ods baseline and target camera positions for each navigable position within the scene. A single line in the input text file (camera_parameters.txt) is formatted as:
 ```
 camera_position_x camera_position_y camera_position_z ods_baseline 
 target1_offset_x target1_offset_y target1_offset_z 
 target2_offset_x target2_offset_y target2_offset_z 
 target3_offset_x target3_offset_y target3_offset_z
 ```
-The existing text files contain navigable positions within each scene, sampled with Habitat-SIM. Find all the existing text files in glob/ and test-glob/.
+The existing text files contain navigable positions within each scene, sampled with [Habitat-SIM](https://github.com/facebookresearch/habitat-sim). 
+Find all the existing text files in glob/.
 
 
-## Video rendering
-To render on one scene:
+## Video Rendering
+This repo also supports video dataset rendering specifically. 
+### Basic Usage 
 ```
 ./build/ReplicaSDK/ReplicaVideoRenderer path/to/scene/mesh.ply 
 path/to/scene/textures path/to/scene/glass.sur camera_parameters.txt 
 spherical[y/n] output/dir/ width height
 ```
-The difference is the format of one line in input text file (camera_parameters.txt), which for video should be:
+The difference is the format of a single line in input text file for video rendering is:
 ```
 camera_position_x camera_position_y camera_position_z 
 lookat_x lookat_y lookat_z ods_baseline 
 rotation_x rotation_y rotation_z target_x target_y target_z
 ```
 
-Can use glob/gen_video_path.py to generate a candidate path text file. See glob/example_script for an example of straight path.
+To generate a video path, one can use `glob/gen_video_path.py`. See `glob/example_script` for an example of straight path generation.
 
 ## Depth-based Mesh rendering
-Example Usage:
+This repo also support depth-based mesh rendering as in <em>Motion parallax for 360° RGBD video</em> [[2]](#2)
+###Basic Usage:
 ```
-./build/ReplicaSDK/DepthMeshRendererBatch TEST_FILES CAMERA_POSES 
+./build/ReplicaSDK/DepthMeshRendererBatch images.txt camera_poses.txt 
 OUT_DIR SPHERICAL<y|n> y y OUTPUT_WIDTH OUTPUT_HEIGHT
-
 ```
 
-TEST_FILES should contain lines of format:
+images.txt should contain lines of format:
 ```
 <ods_left_color>.png <ods_left_depth>.png
 ```
-CAMERA_POSES should contain the desired camera offsets for rendering as below for each line:
+camera_poses.txt should contain the desired camera offsets for rendering as below for each line:
 ```
 <translate_x> <translate_y> <translate_z>
 ```
-
 See more instructions in assets/EVALUATION_HOWTO.
