@@ -20,18 +20,20 @@ using namespace std::chrono;
 int main(int argc, char* argv[]) {
 
   auto model_start = high_resolution_clock::now();
-
-  ASSERT(argc == 9, "Usage: ./Path/to/ReplicaViewer mesh.ply textures glass.sur[glass.sur/n] cameraPositions.txt[file.txt/n] spherical[y/n] outputDir width height");
+  std::cout << argc;
+  ASSERT(argc >= 9, "Usage: ./Path/to/ReplicaViewer mesh.ply textures glass.sur[glass.sur/n] cameraPositions.txt[file.txt/n] spherical[y/n] outputDir width height pro2[file.txt/n]");
 
   bool noSurfaceFile = std::string(argv[3]).compare(std::string("n")) == 0 || !pangolin::FileExists(std::string(argv[3]));
   bool noTxtFile = std::string(argv[4]).compare(std::string("n")) == 0 || !pangolin::FileExists(std::string(argv[4]));
   bool spherical = std::string(argv[5]).compare(std::string("y")) == 0;
+  bool hasNoPro2File = argc < 10 || std::string(argv[9]).compare(std::string("n")) == 0;
   int width = std::stoi(std::string(argv[7]));
   int height = std::stoi(std::string(argv[8]));
 
   const std::string meshFile(argv[1]);
   const std::string atlasFolder(argv[2]);
   const std::string outputDir(argv[6]);
+
   ASSERT(pangolin::FileExists(meshFile));
   ASSERT(pangolin::FileExists(atlasFolder));
   ASSERT(pangolin::FileExists(outputDir));
@@ -57,6 +59,29 @@ int main(int argc, char* argv[]) {
   if(!noTxtFile){
     navPositions = std::string(argv[4]);
     ASSERT(pangolin::FileExists(navPositions));
+  }
+
+  std::string pro2File;
+  std::vector<std::vector<float>> pro2Pos;
+  if (!hasNoPro2File) {
+    pro2File = std::string(argv[9]);
+    ASSERT(pangolin::FileExists(pro2File));
+    std::fstream in(pro2File);
+    std::string line;
+    int i=0;
+    while(std::getline(in,line)){
+      float value;
+      std::stringstream ss(line);
+      pro2Pos.push_back(std::vector<float>());
+
+      int j = 0;
+      while(ss>>value && j < 3){
+        value = value / 1000.0f;
+        pro2Pos[i].push_back(value);
+        ++j;
+      }
+      ++i;
+    }
   }
 
   // load txt file for data generation
@@ -224,13 +249,13 @@ int main(int argc, char* argv[]) {
         // 6,7,8: extrapolation spot
         // 9,10,11: extrapolation spot
         // 12,13,14: gt depth for the erp for three tgt position
-        for(int k =0; k<12;k++){
+        for(int k =0; k<18; k++){
           int which_spot = k / 3;
           int eye= k % 3;
           float basel = cameraPos[j][3];
 
           //translate to target position
-          if(which_spot == 1){
+          if(which_spot == 1){//3,4,5
             // interpolate frame to the right
             Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
             T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][4], cameraPos[j][5], cameraPos[j][6]);
@@ -238,19 +263,26 @@ int main(int argc, char* argv[]) {
             s_cam.GetModelViewMatrix() = T_camera_world;
 
           }
-          else if(which_spot == 2){
+          else if(which_spot == 2){//6,7,8
             // extrapolate frame to the right (?)
             Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
             T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][7], cameraPos[j][8], cameraPos[j][9]);
             T_camera_world = T_translate.inverse() * spot_cam_to_world ;
             s_cam.GetModelViewMatrix() = T_camera_world;
           }
-          else if(which_spot == 3){
+          else if(which_spot == 3){//9,10,11
             // extrapolate frame to the left (?)
             Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
             T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][10], cameraPos[j][11], cameraPos[j][12]);
             T_camera_world = T_translate.inverse() * spot_cam_to_world ;
             s_cam.GetModelViewMatrix() = T_camera_world;
+          }
+          else if(k >= 12) {
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            T_translate.topRightCorner(3, 1) = Eigen::Vector3d(pro2Pos[k - 12][1], pro2Pos[k - 12][0], pro2Pos[k - 12][2]);
+            T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+            eye = 2;
           }
 
           //Render

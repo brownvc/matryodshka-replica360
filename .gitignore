@@ -7,3 +7,4 @@ test-glob/*.txt
 *.png
 *.jpg
 *.jpeg
+tmp/
