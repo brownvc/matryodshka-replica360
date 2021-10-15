@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
 
   auto model_start = high_resolution_clock::now();
   std::cout << argc;
+
   ASSERT(argc >= 9, "Usage: ./Path/to/ReplicaViewer mesh.ply textures glass.sur[glass.sur/n] cameraPositions.txt[file.txt/n] spherical[y/n] outputDir width height pro2[file.txt/n]");
 
   bool noSurfaceFile = std::string(argv[3]).compare(std::string("n")) == 0 || !pangolin::FileExists(std::string(argv[3]));
@@ -238,6 +239,115 @@ int main(int argc, char* argv[]) {
               pangolin::PixelFormatFromString("RGB24"),
               std::string(equirectFilename), 100.0);
         }
+
+      }
+      else if(spherical && hasNoPro2File){
+        // double ods+eqr dataset
+
+        // rendering scheme [left_ods, right_ods, equirect]
+        // 0,1,2: input spot
+        // 3,4,5: interpolation spot
+        // 6,7,8: extrapolation spot
+        // 9,10,11: extrapolation spot
+
+        for(int k =0; k<12; k++){
+          int which_spot = k / 3;
+          int eye= k % 3;
+          float basel = cameraPos[j][3];
+
+          //translate to target position
+          if(which_spot == 1){//3,4,5
+            // interpolate frame to the right
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][4], cameraPos[j][5], cameraPos[j][6]);
+            T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+
+          }
+          else if(which_spot == 2){//6,7,8
+            // extrapolate frame to the right (?)
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][7], cameraPos[j][8], cameraPos[j][9]);
+            T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+          }
+          else if(which_spot == 3){//9,10,11
+            // extrapolate frame to the left (?)
+            Eigen::Matrix4d T_translate = Eigen::Matrix4d::Identity();
+            T_translate.topRightCorner(3, 1) = Eigen::Vector3d(cameraPos[j][10], cameraPos[j][11], cameraPos[j][12]);
+            T_camera_world = T_translate.inverse() * spot_cam_to_world ;
+            s_cam.GetModelViewMatrix() = T_camera_world;
+          }
+
+
+          //Render
+          frameBuffer.Bind();
+          glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+          glPushAttrib(GL_VIEWPORT_BIT);
+          glViewport(0, 0, width, height);
+          glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+          glEnable(GL_CULL_FACE);
+
+          //set parameters
+          ptexMesh.SetExposure(0.01);
+          if(eye != 2){
+            ptexMesh.SetBaseline(basel);
+          }
+          if(spherical){
+            ptexMesh.Render(s_cam,Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f),eye);
+          }else{
+            ptexMesh.Render(s_cam,Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+          }
+          glDisable(GL_CULL_FACE);
+          glPopAttrib(); //GL_VIEWPORT_BIT
+          frameBuffer.Unbind();
+
+          // Download and save
+          render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+          char equirectFilename[1000];
+          snprintf(equirectFilename, 1000, "%s/%s_%04zu_pos%02zu.jpeg", outputDir.c_str(), scene.c_str(), j, k);
+          pangolin::SaveImage(
+              image.UnsafeReinterpret<uint8_t>(),
+              pangolin::PixelFormatFromString("RGB24"),
+              std::string(equirectFilename), 100.0);
+
+
+          if( renderDepth && (k==2 || k==5 || k== 8 || k==11)){
+              //render depth image for the equirect image
+              depthFrameBuffer.Bind();
+              glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+              glPushAttrib(GL_VIEWPORT_BIT);
+              glViewport(0, 0, width, height);
+              glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+              glEnable(GL_CULL_FACE);
+              ptexMesh.RenderDepth(s_cam, 1.f/ 16.f, Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f), eye);
+              glDisable(GL_CULL_FACE);
+              glPopAttrib(); //GL_VIEWPORT_BIT
+
+              depthFrameBuffer.Unbind();
+              depthTexture.Download(depthImage.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+
+              char filename[1000];
+              snprintf(filename, 1000, "%s/%s_%04zu_pos%02zu.jpeg", outputDir.c_str(), scene.c_str(), j, 11 + (k+1)/3 ); //11+(k+1)/3 maps 2-12; 5-13; 8-14; 11-15
+              pangolin::SaveImage(
+                depthImage.UnsafeReinterpret<uint8_t>(),
+                pangolin::PixelFormatFromString("RGB24"),
+                std::string(filename));
+          }
+        }
+
+        if(navCam){
+          if(j+1<numSpots){
+            int cx = rand()%4;
+            int cy = rand()%4;
+            s_cam.SetModelViewMatrix(pangolin::ModelViewLookAtRDF(cameraPos[j+1][0],cameraPos[j+1][1],cameraPos[j+1][2], cx, cy, cameraPos[j+1][2], 0, 0, 1));
+          }
+        }else{
+          continue;
+        }
+        std::cout << "\r Spot " << j + 1  << "/" << numSpots << std::endl;
 
       }
       else if(spherical){

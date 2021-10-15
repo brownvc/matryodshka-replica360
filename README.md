@@ -1,21 +1,18 @@
-# Replica 360 Dataset
+#Replica 360 Dataset
 The original ReplicaRenderer and ReplicaViewer remain the same. See [original repo](https://github.com/facebookresearch/Replica-Dataset) for basic usage. See below for 360 dataset generation.
 
 ## Setup
+* Git Clone this repo.
+* Run `git submodule update --init --recursive` to install 3rd party packages.
 * Run `./download.sh` to download the mesh files.
 * Run `./build.sh` to build all executables.
 
-## 360 Dataset generation
-To generate the training and testing dataset used in [Matryodshka](https://github.com/brownvc/matryodshka) repo [[1]](#1), run 
-```
-./scripts/gen-3dof-360-*-data.sh OUTPUT_DIR WIDTH HEIGHT
-```
 
 ### Basic Usage
 ```
 ./build/ReplicaSDK/ReplicaRendererDataset dataset/scene_name/mesh.ply 
 dataset/scene_name/textures dataset/scene_name/glass.sur camera_parameters[file.txt / n] 
-spherical[y/n] output/dir/ output_width output_height
+spherical[y/n] output/dir/ output_width output_height pro2[globs/pro2pos.txt / n]
 ```
 
 The data generation takes in a text file specifying the camera position, ods baseline and target camera positions for each navigable position within the scene. A single line in the input text file (camera_parameters.txt) is formatted as:
@@ -46,20 +43,4 @@ rotation_x rotation_y rotation_z target_x target_y target_z
 
 To generate a video path, one can use `glob/gen_video_path.py`. See `glob/example_script` for an example of straight path generation.
 
-## Depth-based Mesh rendering
-This repo also support depth-based mesh rendering as in <em>Motion parallax for 360° RGBD video</em> [[2]](#2)
-### Basic Usage:
-```
-./build/ReplicaSDK/DepthMeshRendererBatch images.txt camera_poses.txt 
-OUT_DIR SPHERICAL<y|n> y y OUTPUT_WIDTH OUTPUT_HEIGHT
-```
 
-images.txt should contain lines of format:
-```
-<ods_left_color>.png <ods_left_depth>.png
-```
-camera_poses.txt should contain the desired camera offsets for rendering as below for each line:
-```
-<translate_x> <translate_y> <translate_z>
-```
-See more instructions in assets/EVALUATION_HOWTO.

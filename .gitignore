@@ -8,3 +8,4 @@ test-glob/*.txt
 *.jpg
 *.jpeg
 tmp/
+test*.sh
