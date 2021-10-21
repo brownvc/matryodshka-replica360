@@ -14,24 +14,27 @@
 
 class PTexMesh {
  public:
-  PTexMesh(const std::string& meshFile, const std::string& atlasFolder);
+  PTexMesh(const std::string& meshFile, const std::string& atlasFolder, bool renderSpherical);
 
   virtual ~PTexMesh();
 
   void RenderSubMesh(
       size_t subMesh,
       const pangolin::OpenGlRenderState& cam,
-      const Eigen::Vector4f& clipPlane);
+      const Eigen::Vector4f& clipPlane,
+      int lrC = 0);
 
   void RenderSubMeshDepth(
       size_t subMesh,
       const pangolin::OpenGlRenderState& cam,
       const float depthScale,
-      const Eigen::Vector4f& clipPlane);
+      const Eigen::Vector4f& clipPlane,
+      int lrC = 0);
 
   void Render(
       const pangolin::OpenGlRenderState& cam,
-      const Eigen::Vector4f& clipPlane = Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+      const Eigen::Vector4f& clipPlane = Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f),
+      int lrC = 0);
 
   void RenderWireframe(
       const pangolin::OpenGlRenderState& cam,
@@ -40,7 +43,8 @@ class PTexMesh {
   void RenderDepth(
     const pangolin::OpenGlRenderState& cam,
     const float depthScale=1.0f,
-    const Eigen::Vector4f& clipPlane = Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
+    const Eigen::Vector4f& clipPlane = Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f),
+    int lrC = 0);
 
   float Exposure() const;
   void SetExposure(const float& val);
@@ -50,6 +54,9 @@ class PTexMesh {
 
   float Saturation() const;
   void SetSaturation(const float& val);
+
+  void SetBaseline(const float& val);
+
 
   size_t GetNumSubMeshes() {
     return meshes.size();
@@ -72,13 +79,17 @@ class PTexMesh {
   float splitSize = 0.0f;
   uint32_t tileSize = 0;
 
+  bool renderSpherical=false;
+
   pangolin::GlSlProgram shader;
   pangolin::GlSlProgram depthShader;
 
   float exposure = 1.0f;
   float gamma = 1.0f;
   float saturation = 1.0f;
+  float baseline = 0.064f;
   bool isHdr = false;
+
 
   static constexpr int ROTATION_SHIFT = 30;
   static constexpr int FACE_MASK = 0x3FFFFFFF;

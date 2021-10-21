@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
   MirrorRenderer mirrorRenderer(mirrors, width, height, shadir);
 
   // load mesh and textures
-  PTexMesh ptexMesh(meshFile, atlasFolder);
+  PTexMesh ptexMesh(meshFile, atlasFolder, false);
 
   pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
   pangolin::ManagedImage<float> depthImage(width, height);
@@ -171,4 +171,3 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-

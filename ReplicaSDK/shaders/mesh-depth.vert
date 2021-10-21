@@ -6,12 +6,12 @@ layout(location = 0) in vec4 position;
 uniform mat4 MV, MVP;
 uniform vec4 clipPlane;
 
-out float depth;
+out float vdepth;
 
 void main()
 {
     vec4 cameraPos = MV * position;
-    depth = cameraPos.z;
+    vdepth = cameraPos.z;
     gl_ClipDistance[0] = dot(position, clipPlane);
     gl_Position = MVP * position;
 }

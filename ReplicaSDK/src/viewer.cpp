@@ -1,13 +1,12 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #include <PTexLib.h>
-
+#include <ctime>
 #include <pangolin/display/display.h>
 #include <pangolin/display/widgets/widgets.h>
-
 #include "MirrorRenderer.h"
 
 int main(int argc, char* argv[]) {
-  ASSERT(argc == 3 || argc == 4, "Usage: ./ReplicaViewer mesh.ply textures [glass.sur]");
+  ASSERT(argc==3 || argc == 4 || argc == 5, "Usage: ./ReplicaViewer mesh.ply textures [glass.sur] [y if spherical]");
 
   const std::string meshFile(argv[1]);
   const std::string atlasFolder(argv[2]);
@@ -15,9 +14,23 @@ int main(int argc, char* argv[]) {
   ASSERT(pangolin::FileExists(atlasFolder));
 
   std::string surfaceFile;
+  bool spherical = false;
+
   if (argc == 4) {
     surfaceFile = std::string(argv[3]);
+    if(surfaceFile.length()==1){
+      spherical=true;
+    }else{
+      ASSERT(pangolin::FileExists(surfaceFile));
+    }
+  }
+
+  if (argc==5) {
+
+    surfaceFile = std::string(argv[3]);
     ASSERT(pangolin::FileExists(surfaceFile));
+
+    spherical = true;
   }
 
   const int uiWidth = 180;
@@ -58,7 +71,8 @@ int main(int argc, char* argv[]) {
           (height - 1.0f) / 2.0f,
           0.1f,
           100.0f),
-      pangolin::ModelViewLookAtRDF(0, 0, 4, 0, 0, 0, 0, 1, 0));
+      pangolin::ModelViewLookAtRDF(0, 1, 0.1, 1, 1, 0.1, 0, 0, 1));
+
 
   pangolin::Handler3D s_handler(s_cam);
 
@@ -85,7 +99,7 @@ int main(int argc, char* argv[]) {
   MirrorRenderer mirrorRenderer(mirrors, width, height, shadir);
 
   // load mesh and textures
-  PTexMesh ptexMesh(meshFile, atlasFolder);
+  PTexMesh ptexMesh(meshFile, atlasFolder, spherical);
 
   pangolin::Var<float> exposure("ui.Exposure", 0.01, 0.0f, 0.1f);
   pangolin::Var<float> gamma("ui.Gamma", ptexMesh.Gamma(), 1.0f, 3.0f);
@@ -93,11 +107,13 @@ int main(int argc, char* argv[]) {
   pangolin::Var<float> depthScale("ui.Depth_scale", 0.1f, 0.0f, 1.0f);
 
   pangolin::Var<bool> wireframe("ui.Wireframe", false, true);
+  pangolin::Var<bool> renderImage("ui.Render_view", false, true);
   pangolin::Var<bool> drawBackfaces("ui.Draw_backfaces", false, true);
   pangolin::Var<bool> drawMirrors("ui.Draw_mirrors", true, true);
   pangolin::Var<bool> drawDepth("ui.Draw_depth", false, true);
 
   ptexMesh.SetExposure(exposure);
+  //glDisable(GL_CULL_FACE);
 
   while (!pangolin::ShouldQuit()) {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -116,6 +132,36 @@ int main(int argc, char* argv[]) {
 
     if (meshView.IsShown()) {
       meshView.Activate(s_cam);
+
+      if(renderImage){
+
+        pangolin::GlTexture render(width, height);
+        pangolin::GlRenderBuffer renderBuffer(width, height);
+        pangolin::GlFramebuffer frameBuffer(render, renderBuffer);
+
+        pangolin::ManagedImage<Eigen::Matrix<uint8_t, 3, 1>> image(width, height);
+
+        frameBuffer.Bind();
+        glPushAttrib(GL_VIEWPORT_BIT);
+        glViewport(0, 0, width, height);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+        glEnable(GL_CULL_FACE);
+        ptexMesh.Render(s_cam);
+        glDisable(GL_CULL_FACE);
+
+        glPopAttrib(); //GL_VIEWPORT_BIT
+        frameBuffer.Unbind();
+        render.Download(image.ptr, GL_RGB, GL_UNSIGNED_BYTE);
+
+        char cmapFilename[1000];
+        snprintf(cmapFilename, 1000, "/home/selenaling/Desktop/Replica-Dataset/build/ReplicaSDK/renderFromViewer.png");
+
+        pangolin::SaveImage(
+            image.UnsafeReinterpret<uint8_t>(),
+            pangolin::PixelFormatFromString("RGB24"),
+            std::string(cmapFilename));
+      }
 
       if (drawBackfaces) {
         glDisable(GL_CULL_FACE);
@@ -148,6 +194,7 @@ int main(int argc, char* argv[]) {
           mirrorRenderer.Render(mirror, mirrorRenderer.GetMaskTexture(i), s_cam, drawDepth);
         }
       }
+
     }
 
     pangolin::FinishFrame();

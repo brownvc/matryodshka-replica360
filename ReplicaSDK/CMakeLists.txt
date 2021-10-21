@@ -46,9 +46,99 @@ target_link_libraries(ReplicaViewer
                       stdc++fs
 )
 
+add_executable(ReplicaRendererDataset src/render_dataset.cpp src/MirrorSurface.cpp)
+
+target_link_libraries(ReplicaRendererDataset
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(ReplicaVideoRenderer src/render_video.cpp src/MirrorSurface.cpp)
+
+target_link_libraries(ReplicaVideoRenderer
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+
 add_executable(ReplicaRenderer src/render.cpp src/MirrorSurface.cpp)
 
 target_link_libraries(ReplicaRenderer
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+
+add_executable(DepthMeshViewer src/depth_mesh_viewer.cpp)
+
+target_link_libraries(DepthMeshViewer
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(DepthMeshViewerLayered src/depth_mesh_viewer_layered.cpp)
+
+target_link_libraries(DepthMeshViewerLayered
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(DepthMeshRenderer src/depth_mesh_render.cpp)
+
+target_link_libraries(DepthMeshRenderer
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(DepthMeshRendererBatch src/depth_mesh_render_batch.cpp)
+
+target_link_libraries(DepthMeshRendererBatch
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(DepthMeshRendererLayered src/depth_mesh_render_layered.cpp)
+
+target_link_libraries(DepthMeshRendererLayered
+                      ${Pangolin_LIBRARIES}
+                      ${dl_LIBRARIES}
+                      GL
+                      GLEW
+                      ptex
+                      stdc++fs
+)
+
+add_executable(DepthMeshRendererLayeredBatch src/depth_mesh_render_layered_batch.cpp)
+
+target_link_libraries(DepthMeshRendererLayeredBatch
                       ${Pangolin_LIBRARIES}
                       ${dl_LIBRARIES}
                       GL

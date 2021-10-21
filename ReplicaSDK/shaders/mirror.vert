@@ -22,5 +22,5 @@ void main()
     Out.normal = mat3(MV_matrix) * normal;
     Out.eyeSpacePos = vec3(MV_matrix * position);
     gl_Position = MVP_matrix * position;
-    Out.screenCoord = (gl_Position.xy / gl_Position.w)*0.5+0.5;    
+    Out.screenCoord = (gl_Position.xy / gl_Position.w)*0.5+0.5;
 }

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+source /home/battal/anaconda3/bin/activate replica
+
+python split_ods.py --width $3 --height $4 --output_dir $2/output_color --video $1.mp4 --sample_rate $5
+python split_ods.py --width $3 --height $4 --output_dir $2/output_depth --video $1_depth.mp4 --sample_rate $5

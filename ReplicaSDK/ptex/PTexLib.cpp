@@ -13,28 +13,25 @@
 #include <fstream>
 #include <unordered_map>
 
-PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder) {
+PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder, bool rS) {
   // Check everything exists
   ASSERT(pangolin::FileExists(meshFile));
   ASSERT(pangolin::FileExists(atlasFolder));
+  renderSpherical = rS;
 
   // Parse parameters
   const std::string paramsFile = atlasFolder + "/parameters.json";
 
   ASSERT(pangolin::FileExists(paramsFile));
-
   std::ifstream file(paramsFile);
   picojson::value json;
   picojson::parse(json, file);
-
   ASSERT(json.contains("splitSize"), "Missing splitSize in parameters.json");
   ASSERT(json.contains("tileSize"), "Missing tileSize in parameters.json");
 
   splitSize = json["splitSize"].get<double>();
   tileSize = json["tileSize"].get<int64_t>();
-
   LoadMeshData(meshFile);
-
   LoadAtlasData(atlasFolder);
   if (isHdr) {
     // set defaults for HDR scene
@@ -47,14 +44,35 @@ PTexMesh::PTexMesh(const std::string& meshFile, const std::string& atlasFolder) 
   const std::string shadir = STR(SHADER_DIR);
   ASSERT(pangolin::FileExists(shadir), "Shader directory not found!");
 
-  shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-ptex.vert", {}, {shadir});
-  shader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/mesh-ptex.geom", {}, {shadir});
-  shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-ptex.frag", {}, {shadir});
-  shader.Link();
+  if(renderSpherical){
+    shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-ptex-spherical.vert", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/mesh-ptex-spherical.geom", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-ptex.frag", {}, {shadir});
+    shader.Link();
+  }
+  else{
+    shader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-ptex.vert", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/mesh-ptex.geom", {}, {shadir});
+    shader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-ptex.frag", {}, {shadir});
+    shader.Link();
 
-  depthShader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-depth.vert", {}, {shadir});
-  depthShader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-depth.frag", {}, {shadir});
-  depthShader.Link();
+  }
+
+  if(renderSpherical){
+    depthShader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-depth-spherical.vert", {}, {shadir});
+    depthShader.AddShaderFromFile(pangolin::GlSlGeometryShader, shadir + "/mesh-depth-spherical.geom", {}, {shadir});
+    depthShader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-depth.frag", {}, {shadir});
+    depthShader.Link();
+
+
+  }else{
+    depthShader.AddShaderFromFile(pangolin::GlSlVertexShader, shadir + "/mesh-depth.vert", {}, {shadir});
+    depthShader.AddShaderFromFile(pangolin::GlSlFragmentShader, shadir + "/mesh-depth.frag", {}, {shadir});
+    depthShader.Link();
+
+
+  }
+
 }
 
 PTexMesh::~PTexMesh() {}
@@ -83,10 +101,18 @@ void PTexMesh::SetSaturation(const float& val) {
   saturation = val;
 }
 
+void PTexMesh::SetBaseline(const float& val){
+
+  baseline = val;
+
+}
+
 void PTexMesh::RenderSubMesh(
     size_t subMesh,
     const pangolin::OpenGlRenderState& cam,
-    const Eigen::Vector4f& clipPlane) {
+    const Eigen::Vector4f& clipPlane,
+    int lrC
+  ) {
   ASSERT(subMesh < meshes.size());
   Mesh& mesh = *meshes[subMesh];
 
@@ -99,6 +125,13 @@ void PTexMesh::RenderSubMesh(
   shader.SetUniform("clipPlane", clipPlane(0), clipPlane(1), clipPlane(2), clipPlane(3));
 
   shader.SetUniform("widthInTiles", int(mesh.atlas.width / tileSize));
+
+  if(renderSpherical){
+    shader.SetUniform("MV", cam.GetModelViewMatrix());
+    shader.SetUniform("baseline", baseline);
+    shader.SetUniform("leftRight", lrC);
+  }
+
 
   glActiveTexture(GL_TEXTURE0);
   mesh.atlas.Bind();
@@ -129,47 +162,99 @@ void PTexMesh::RenderSubMeshDepth(
     size_t subMesh,
     const pangolin::OpenGlRenderState& cam,
     const float depthScale,
-    const Eigen::Vector4f& clipPlane) {
+    const Eigen::Vector4f& clipPlane,
+    int lrC ) {
   ASSERT(subMesh < meshes.size());
   Mesh& mesh = *meshes[subMesh];
 
-  glPushAttrib(GL_POLYGON_BIT);
-  int currFrontFace;
-  glGetIntegerv(GL_FRONT_FACE, &currFrontFace);
-  //Drawing the faces has the opposite winding order to the GL_LINES_ADJACENCY
-  glFrontFace(currFrontFace == GL_CW ? GL_CCW : GL_CW);
+  if(renderSpherical){
+    glPushAttrib(GL_POLYGON_BIT);
+    // int currFrontFace;
+    // glGetIntegerv(GL_FRONT_FACE, &currFrontFace);
+    // //Drawing the faces has the opposite winding order to the GL_LINES_ADJACENCY
+    // glFrontFace(currFrontFace == GL_CW ? GL_CCW : GL_CW);
 
-  depthShader.Bind();
-  depthShader.SetUniform("MVP", cam.GetProjectionModelViewMatrix());  
-  depthShader.SetUniform("MV", cam.GetModelViewMatrix());
-  depthShader.SetUniform("clipPlane", clipPlane(0), clipPlane(1), clipPlane(2), clipPlane(3));
-  depthShader.SetUniform("scale", depthScale);
-
-  mesh.vbo.Bind();
-  glVertexAttribPointer(0, mesh.vbo.count_per_element, mesh.vbo.datatype, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-  mesh.vbo.Unbind();
-
-  mesh.ibo.Bind();
-  glDrawElements(GL_QUADS, mesh.ibo.num_elements, mesh.ibo.datatype, 0);
-  mesh.ibo.Unbind();
-  glDisableVertexAttribArray(0);
-
-  depthShader.Unbind();
-
-  glPopAttrib();
-}
+    depthShader.Bind();
+    depthShader.SetUniform("MVP", cam.GetProjectionModelViewMatrix());
+    depthShader.SetUniform("MV", cam.GetModelViewMatrix());
+    depthShader.SetUniform("clipPlane", clipPlane(0), clipPlane(1), clipPlane(2), clipPlane(3));
+    depthShader.SetUniform("scale", depthScale);
+    depthShader.SetUniform("baseline", baseline);
+    depthShader.SetUniform("leftRight", lrC);
 
 
-void PTexMesh::Render(const pangolin::OpenGlRenderState& cam, const Eigen::Vector4f& clipPlane) {
-  for (size_t i = 0; i < meshes.size(); i++) {
-    RenderSubMesh(i, cam, clipPlane);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.abo.bo);
+    mesh.vbo.Bind();
+    glVertexAttribPointer(0, mesh.vbo.count_per_element, mesh.vbo.datatype, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+    mesh.vbo.Unbind();
+
+    // mesh.ibo.Bind();
+    // glDrawElements(GL_QUADS, mesh.ibo.num_elements, mesh.ibo.datatype, 0);
+    // mesh.ibo.Unbind();
+
+    mesh.ibo.Bind();
+    // using GL_LINES_ADJACENCY here to send quads to geometry shader
+    glDrawElements(GL_LINES_ADJACENCY, mesh.ibo.num_elements, mesh.ibo.datatype, 0);
+    mesh.ibo.Unbind();
+
+    glDisableVertexAttribArray(0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+    depthShader.Unbind();
+
+    glPopAttrib();
+
+
+  }else{
+
+    glPushAttrib(GL_POLYGON_BIT);
+    int currFrontFace;
+    glGetIntegerv(GL_FRONT_FACE, &currFrontFace);
+    //Drawing the faces has the opposite winding order to the GL_LINES_ADJACENCY
+    glFrontFace(currFrontFace == GL_CW ? GL_CCW : GL_CW);
+
+    depthShader.Bind();
+    depthShader.SetUniform("MVP", cam.GetProjectionModelViewMatrix());
+    depthShader.SetUniform("MV", cam.GetModelViewMatrix());
+    depthShader.SetUniform("clipPlane", clipPlane(0), clipPlane(1), clipPlane(2), clipPlane(3));
+    depthShader.SetUniform("scale", depthScale);
+
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.abo.bo);
+    mesh.vbo.Bind();
+    glVertexAttribPointer(0, mesh.vbo.count_per_element, mesh.vbo.datatype, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+    mesh.vbo.Unbind();
+
+    mesh.ibo.Bind();
+    glDrawElements(GL_QUADS, mesh.ibo.num_elements, mesh.ibo.datatype, 0);
+    mesh.ibo.Unbind();
+
+    // mesh.ibo.Bind();
+    // // using GL_LINES_ADJACENCY here to send quads to geometry shader
+    // glDrawElements(GL_LINES_ADJACENCY, mesh.ibo.num_elements, mesh.ibo.datatype, 0);
+    // mesh.ibo.Unbind();
+
+    glDisableVertexAttribArray(0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+    depthShader.Unbind();
+
+    glPopAttrib();
+
+
+
   }
 }
 
-void PTexMesh::RenderDepth(const pangolin::OpenGlRenderState& cam, const float depthScale, const Eigen::Vector4f& clipPlane) {
+void PTexMesh::Render(const pangolin::OpenGlRenderState& cam, const Eigen::Vector4f& clipPlane, int lrC) {
   for (size_t i = 0; i < meshes.size(); i++) {
-    RenderSubMeshDepth(i, cam, depthScale, clipPlane);
+    RenderSubMesh(i, cam, clipPlane, lrC);
+  }
+}
+
+void PTexMesh::RenderDepth(const pangolin::OpenGlRenderState& cam, const float depthScale, const Eigen::Vector4f& clipPlane, int lrC) {
+  for (size_t i = 0; i < meshes.size(); i++) {
+    RenderSubMeshDepth(i, cam, depthScale, clipPlane, lrC);
   }
 }
 
