@@ -9,6 +9,8 @@ The original ReplicaRenderer and ReplicaViewer remain the same. See [original re
 
 
 ### Basic Usage
+To generate the training and testing dataset used in [Matryodshka](https://visual.cs.brown.edu/projects/matryodshka-webpage/), run 
+
 ```
 ./build/ReplicaSDK/ReplicaRendererDataset dataset/scene_name/mesh.ply 
 dataset/scene_name/textures dataset/scene_name/glass.sur camera_parameters[file.txt / n] 
