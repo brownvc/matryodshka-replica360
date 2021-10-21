@@ -1,5 +1,7 @@
-# Replica 360 Dataset
-The original ReplicaRenderer and ReplicaViewer remain the same. See [original repo](https://github.com/facebookresearch/Replica-Dataset) for basic usage. See below for 360 dataset generation.
+# MatryODShka Replica 360 Dataset Generator
+This repo contains the modified version of [Replica Dataset](https://github.com/facebookresearch/Replica-Dataset) to generate the training and testing dataset used in [MatryODShka](https://visual.cs.brown.edu/projects/matryodshka-webpage/) paper. This is a companion to the training code [repo](https://github.com/brownvc/matryodshka).
+
+The original ReplicaRenderer and ReplicaViewer remain the same. See original repo for basic usage. See below for 360 dataset generation.
 
 ## Setup
 * Git Clone this repo.
@@ -9,7 +11,7 @@ The original ReplicaRenderer and ReplicaViewer remain the same. See [original re
 
 
 ### Basic Usage
-To generate the training and testing dataset used in [Matryodshka](https://visual.cs.brown.edu/projects/matryodshka-webpage/), run 
+To generate the training and testing dataset, run 
 
 ```
 ./build/ReplicaSDK/ReplicaRendererDataset dataset/scene_name/mesh.ply 
